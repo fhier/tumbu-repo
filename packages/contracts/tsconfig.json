@@ -9,7 +9,7 @@
     "skipLibCheck": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "typeRoots": ["../../apps/web/node_modules/@types"]
+    "typeRoots": ["../../apps/web/node_modules/@types", "../../node_modules/@types"]
   },
   "include": ["src"]
 }

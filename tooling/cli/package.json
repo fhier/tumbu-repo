@@ -6,7 +6,7 @@
   },
   "main": "dist/index.js",
   "scripts": {
-    "build": "../../apps/web/node_modules/.bin/tsc -p tsconfig.json"
+    "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@tumbu/contracts": "0.0.1",

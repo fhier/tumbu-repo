@@ -1,4 +1,4 @@
-﻿-- CreateEnum
+-- CreateEnum
 CREATE TYPE "Role" AS ENUM ('OWNER', 'ADMIN', 'STAFF', 'MEMBER', 'VIEWER', 'TECHNICIAN');
 
 -- CreateTable

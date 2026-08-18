@@ -8,8 +8,9 @@
     "tooling/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=apps/web",
-    "build": "npm run build --workspace=apps/web",
+    "dev": "concurrently \"npm run dev --workspace=apps/web\" \"npm run start:dev --workspace=apps/api\"",
+    "start:dev": "concurrently \"npm run dev --workspace=apps/web\" \"npm run start:dev --workspace=apps/api\"",
+    "build": "npm run build --workspace=packages/core && npm run build --workspace=packages/domain && npm run build --workspace=packages/knowledge && npm run build --workspace=packages/contracts && npm run build --workspace=packages/devkit && npm run build --workspace=tooling/cli && npm run build --workspace=apps/api && npm run build --workspace=apps/web",
     "start": "npm run start --workspace=apps/web",
     "lint": "npm run lint --workspace=apps/web",
     "tumbu": "node tooling/cli/bin/tumbu.js",
@@ -28,7 +29,7 @@
     "doc": "docs"
   },
   "devDependencies": {
-    "@types/uuid": "^11.0.0"
+    "concurrently": "^10.0.5"
   },
   "keywords": [],
   "author": "",

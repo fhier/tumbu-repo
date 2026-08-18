@@ -1,3 +1,26 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+import * as fs from 'fs';
+
+// Auto-load environment variables from various possible paths before NestFactory loads
+function loadEnv() {
+  const pathsToTry = [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), 'apps/api/.env'),
+    // Relative to compiled JS output
+    path.resolve(__dirname, '../.env'),
+    path.resolve(__dirname, '../../.env'),
+    path.resolve(__dirname, '../../../.env'),
+  ];
+
+  for (const envPath of pathsToTry) {
+    if (fs.existsSync(envPath)) {
+      dotenv.config({ path: envPath });
+    }
+  }
+}
+loadEnv();
+
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';

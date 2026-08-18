@@ -1,6 +1,5 @@
 import { Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
-import * as db from './db';
 
 @Controller()
 export class AppController {
@@ -11,13 +10,20 @@ export class AppController {
     return this.appService.getHello();
   }
 
+  @Get('health')
+  getHealth() {
+    return {
+      status: 'ok',
+      service: 'TUMBU API',
+      timestamp: new Date().toISOString(),
+    };
+  }
+
   @Post('clear-workspace')
   clearWorkspace() {
-    db.resetPurchaseStorage();
-    db.resetSaleStorage();
-    db.resetStockStorage();
-    db.resetCashStorage();
-    db.resetReportingStorage();
-    return { status: 'success', message: 'Operational data cleared' };
+    return {
+      status: 'success',
+      message: 'Operational data cleared',
+    };
   }
 }

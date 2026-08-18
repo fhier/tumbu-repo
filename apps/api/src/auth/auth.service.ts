@@ -399,7 +399,8 @@ export class AuthService {
     if (user.isPlatformAdmin) {
       land = 'platform';
       membershipRole = 'PLATFORM_ADMIN';
-      tenantId = user.tenantId;
+      const accounts = await this.ensureAccountsTenant();
+      tenantId = (user.tenantId && user.tenantId.trim()) ? user.tenantId : accounts.id;
     } else if (enterable.length === 0) {
       // Belum ada workspace ACTIVE (mungkin hanya PENDING) → setup / tunggu approval
       land = 'setup';

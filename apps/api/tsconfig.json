@@ -12,14 +12,15 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
     "sourceMap": true,
+    "rootDir": "src",
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "@tumbu/core": ["../../packages/core/src"],
-      "@tumbu/knowledge": ["../../packages/knowledge/src"],
-      "@tumbu/domain": ["../../packages/domain/src"]
+      "@tumbu/core": ["../../packages/core/dist"],
+      "@tumbu/knowledge": ["../../packages/knowledge/dist"],
+      "@tumbu/domain": ["../../packages/domain/dist"]
     },
-    "incremental": true,
+    "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,

@@ -15,7 +15,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:5432:5432"  # hanya expose ke localhost, tidak ke luar
+      - "127.0.0.1:5433:5432"  # host:5433 → container:5432 (hindari konflik PostgreSQL lokal)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U tumbu -d tumbu"]
       interval: 10s

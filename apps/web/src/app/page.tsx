@@ -1,6 +1,9 @@
 "use client";
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { authApi, platformApi, erpApi, cycleApi, serviceApi } from '../tumbu-api';
+import { authApi, platformApi, erpApi, cycleApi, serviceApi, tumbuFetch } from '../tumbu-api';
+import { PlatformPages } from './platform-pages';
+import { DistributorPages } from './distributor-pages';
+import { AquaPages } from './aqua-pages';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sun, Moon, ArrowRight, Check, Zap, Database, Smartphone,
@@ -220,6 +223,12 @@ export default function Page() {
   const [authAgreedTerms, setAuthAgreedTerms] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const apiFetch = useCallback(
+    async <T,>(path: string, init?: RequestInit): Promise<T> => {
+      return tumbuFetch(path, authToken || undefined, init);
+    },
+    [authToken],
+  );
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [workspaces, setWorkspaces] = useState<any[]>([]);
   const [activeWorkspace, setActiveWorkspace] = useState<any>(null);
@@ -3058,7 +3067,24 @@ export default function Page() {
                   platformTab={workspaceModuleTab}
                   onNotify={showToast}
                 >
-                  <div className="space-y-6 max-w-[1200px]">
+                  {authToken ? (
+                    <PlatformPages
+                      page={workspaceModuleTab}
+                      apiFetch={apiFetch}
+                      onNotify={showToast}
+                      onRefreshShell={async () => {
+                        const list = await platformApi.workspaces(authToken);
+                        setPlatformWorkspacesList(list);
+                      }}
+                      onOpenWorkspace={async (id) => {
+                        const ws = platformWorkspacesList.find((w: any) => w.id === id);
+                        if (ws) {
+                          await activateWorkspace(ws);
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div className="space-y-6 max-w-[1200px]">
                     {/* RINGKASAN PLATFORM (OVERVIEW) */}
                     {workspaceModuleTab === 'overview' && (
                       <div className="space-y-6">
@@ -3595,6 +3621,7 @@ export default function Page() {
                       </div>
                     )}
                   </div>
+                  )}
                 </PlatformAdminSkin>
               ) : (
                 (() => {
@@ -3659,6 +3686,26 @@ export default function Page() {
                         onOpenAddProductModal={() => setShowHuluHilirModal(true)}
                         onNotify={showToast}
                       >
+                  {authToken ? (
+                    ['CULTIVATOR', 'BUDIDAYA'].includes((activeWorkspace?.jenisUsaha || '').toUpperCase()) ? (
+                      <AquaPages
+                        page={workspaceModuleTab}
+                        apiFetch={apiFetch}
+                        onNotify={showToast}
+                        workspaceName={activeWorkspace?.name}
+                        blueprintName={activeWorkspace?.blueprint?.name || activeWorkspace?.blueprintName}
+                        allowedSpecies={activeWorkspace?.allowedSpecies || []}
+                        onNavigate={setWorkspaceModuleTab}
+                      />
+                    ) : (
+                      <DistributorPages
+                        page={workspaceModuleTab}
+                        apiFetch={apiFetch}
+                        onNotify={showToast}
+                      />
+                    )
+                  ) : (
+                    <>
                   {/* DASHBOARD OVERVIEW PANEL */}
                   {workspaceModuleTab === 'dashboard' && (
                 <div className="space-y-6 max-w-[1200px]">
@@ -5578,6 +5625,7 @@ export default function Page() {
               {(workspaceModuleTab === 'ai_tumbu' || platformTab === 'ai_tumbu' || workspaceModuleTab === 'ai_sentinel') && (
                 null
               )}
+                    </>)}
                     </MemberSkin>
 )}
                   </div>
