@@ -1,0 +1,20 @@
+{
+  "name": "TUMBU OS",
+  "short_name": "TUMBU",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0F172A",
+  "icons": [
+    {
+      "src": "/logo/tumbu-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo/tumbu-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "name": "tumbu-runtime",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "tooling/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "start": "npm run start --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
+    "tumbu": "node tooling/cli/bin/tumbu.js",
+    "tumbu:build": "npm run build --workspace=packages/contracts && npm run build --workspace=packages/devkit && npm run build --workspace=tooling/cli"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@google/genai": "^2.17.0",
+    "uuid": "^14.0.1"
+  },
+  "description": "",
+  "main": "append_model.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "devDependencies": {
+    "@types/uuid": "^11.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

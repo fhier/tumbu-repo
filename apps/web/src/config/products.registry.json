@@ -1,0 +1,20 @@
+{
+  "products": {
+    "distributor_benih": {
+      "id": "distributor_benih",
+      "name": "Paket Distributor Benih & Pakan",
+      "type": "distributor",
+      "description": "Sistem operasional grosir benih, pakan, surat jalan, dan kas distributor",
+      "allowed_modules": ["dashboard", "sales", "inventory", "partners", "cash"],
+      "blocked_features": ["aqua_cycles", "aqua_sampling", "aqua_mortality", "aqua_feed_calc"]
+    },
+    "pembudidaya_lele": {
+      "id": "pembudidaya_lele",
+      "name": "Paket Pembudidaya Lele & Nila",
+      "type": "budidaya",
+      "description": "Sistem operasional siklus kolam, pencatatan pakan, sampling, panen, dan kas kolam",
+      "allowed_modules": ["dashboard", "aqua_cycles", "aqua_feed", "aqua_sampling", "aqua_harvest", "cash"],
+      "blocked_features": ["distributor_sj", "distributor_po", "distributor_tier_prices"]
+    }
+  }
+}

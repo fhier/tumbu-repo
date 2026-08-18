@@ -1,0 +1,28 @@
+{
+  "plans": {
+    "paket_a_dasar": {
+      "id": "paket_a_dasar",
+      "name": "Paket Dasar",
+      "max_sku": 2,
+      "ai_assistant": false,
+      "price_rp": 0,
+      "description": "Cocok untuk usaha perorangan dengan maksimal 2 SKU produk"
+    },
+    "paket_b_juragan": {
+      "id": "paket_b_juragan",
+      "name": "Paket Juragan",
+      "max_sku": 5,
+      "ai_assistant": false,
+      "price_rp": 99000,
+      "description": "Cocok untuk toko/suplier berkembang hingga 5 SKU produk"
+    },
+    "paket_pro_sultan": {
+      "id": "paket_pro_sultan",
+      "name": "Paket Sultan",
+      "max_sku": 999,
+      "ai_assistant": true,
+      "price_rp": 299000,
+      "description": "Akses tanpa batas SKU + AI Asisten pencatatan otomatis transaksi"
+    }
+  }
+}

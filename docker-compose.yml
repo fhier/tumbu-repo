@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # ─────────────────────────────────────
+  # PostgreSQL Database
+  # ─────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: tumbu_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tumbu
+      POSTGRES_USER: tumbu
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"  # hanya expose ke localhost, tidak ke luar
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tumbu -d tumbu"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─────────────────────────────────────
+  # NestJS API (port 3001)
+  # ─────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: tumbu_api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      TUMBU_ENV: ${TUMBU_ENV:-production}
+      DATABASE_URL: postgresql://tumbu:${POSTGRES_PASSWORD}@postgres:5432/tumbu
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      DEMO_USER_PASSWORD: ${DEMO_USER_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      CORS_ALLOW_TRYCLOUDFLARE: "0"
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-stub}
+      STUB_WEBHOOK_SECRET: ${STUB_WEBHOOK_SECRET}
+      XENDIT_SECRET_KEY: ${XENDIT_SECRET_KEY:-}
+      XENDIT_CALLBACK_TOKEN: ${XENDIT_CALLBACK_TOKEN:-}
+      REQUIRE_STRICT_SECRETS: ${REQUIRE_STRICT_SECRETS:-0}
+      AUTH_DISABLED: "0"
+      API_PORT: "3001"
+    ports:
+      - "127.0.0.1:3001:3001"  # hanya expose ke localhost (Nginx yang forward)
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ─────────────────────────────────────
+  # Next.js Web (port 3000)
+  # ─────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: tumbu_web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: "1"
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+      # API URL untuk server-side Next.js → pakai nama service Docker
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost}
+    ports:
+      - "127.0.0.1:3000:3000"  # hanya expose ke localhost (Nginx yang forward)
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local

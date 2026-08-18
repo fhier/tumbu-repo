@@ -1,0 +1,23 @@
+node_modules
+.pnpm-store
+dist
+.next
+*.tsbuildinfo
+*.log
+*.local
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Firebase (tidak digunakan, pastikan tidak pernah ter-commit)
+firebase-applet-config.json
+.firebaserc
+firebase.json
+*.firebaserc
+
+# AI tools
+.aider*
+.blackboxcli/

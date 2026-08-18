@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="TUMBU mark">
+  <!-- Funnel mark: Data � Insight � Growth -->
+  <rect x="18" y="18" width="84" height="12" rx="6" fill="#0A2E63"/>
+  <rect x="28" y="38" width="28" height="11" rx="5.5" fill="#0A2E63"/>
+  <rect x="64" y="38" width="28" height="11" rx="5.5" fill="#0A2E63"/>
+  <rect x="40" y="57" width="40" height="11" rx="5.5" fill="#0A2E63"/>
+  <rect x="48" y="76" width="24" height="11" rx="5.5" fill="#1E9E43"/>
+  <rect x="54" y="95" width="12" height="10" rx="5" fill="#1E9E43"/>
+</svg>

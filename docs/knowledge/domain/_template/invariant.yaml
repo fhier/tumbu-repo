@@ -1,0 +1,46 @@
+# TEMPLATE - COPY THIS FOR NEW DOMAIN
+# Jangan edit file ini, copy ke domain baru
+
+domain: TemplateDomain
+version: 1.0.0
+entity: TemplateDomain
+
+lifecycle:
+  terminal_states: [] # contoh: [ARCHIVED], [CLOSED]
+  states: [DRAFT, ACTIVE, CLOSED] # ganti sesuai domain
+  transitions:
+    - from: DRAFT
+      to: [ACTIVE]
+      trigger: Activate
+    - from: ACTIVE
+      to: [CLOSED]
+      trigger: Close
+  forbidden:
+    - from: CLOSED
+      to: [DRAFT, ACTIVE]
+    - from: ACTIVE
+      to: [DRAFT]
+
+invariants:
+  - id: INV-XXX-001
+    category: Data Integrity # Business | Data Integrity | Workflow | Calculation | Permission
+    rule: English rule for AI - must be clear and testable
+    desc: Penjelasan bahasa Indonesia
+    severity: ERROR # ERROR | WARN | AUTO
+    enforcement: Aggregate # Aggregate | Domain Service | Application Service | Domain Event
+    check_via: null # contoh: Repository.method() == condition
+
+events:
+  - TemplateDomainCreated
+  - TemplateDomainUpdated
+
+dependencies:
+  domains: [] # hard dependency, parent must be STABLE
+  read_dependencies: [] # only for validation via repository
+
+formulas: {} # jika ada kalkulasi
+
+notes:
+  - All state transitions must occur only through defined triggers
+  - If invariant needs other aggregate, use Domain Service, never direct import
+  - Versioning: bump minor version when adding new INV, never change meaning of existing ID

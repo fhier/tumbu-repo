@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" fill="none">
+  <defs>
+    <linearGradient id="tumbuGrad1" x1="50" y1="200" x2="450" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="50%" stop-color="#0EA5E9"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="tumbuGrad2" x1="150" y1="100" x2="350" y2="450" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22C55E"/>
+      <stop offset="100%" stop-color="#0284C7"/>
+    </linearGradient>
+  </defs>
+  <circle cx="245" cy="138" r="32" fill="#F59E0B"/>
+  <path d="M 75 125 C 160 125 220 180 235 290 C 235 370 210 400 245 400 C 280 400 255 350 255 290 C 270 180 330 125 415 125 C 330 145 270 200 245 280 C 220 200 160 145 75 125 Z" fill="url(#tumbuGrad1)"/>
+  <path d="M 105 130 C 180 160 225 210 230 380 C 230 430 250 430 260 380 C 265 240 330 170 395 138 C 300 170 245 230 238 360 C 228 220 180 170 105 130 Z" fill="url(#tumbuGrad2)"/>
+  <path d="M 395 105 L 399 118 L 412 122 L 399 126 L 395 139 L 391 126 L 378 122 L 391 118 Z" fill="#0F172A"/>
+</svg>

@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "users": {
+      "title": "User Profile",
+      "description": "User account and platform role metadata",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["OWNER", "ADMIN", "STAFF", "MEMBER", "VIEWER", "TECHNICIAN"] },
+        "tenantId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "tenantId"]
+    },
+    "tenants": {
+      "title": "Tenant / Workspace",
+      "description": "Tenant workspace data — business entity using the platform",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "blueprint": { "type": "string" },
+        "blueprintId": { "type": "string" },
+        "status": { "type": "string", "enum": ["ACTIVE", "INACTIVE", "SUSPENDED"] },
+        "commercialStatus": { "type": "string", "enum": ["TRIAL", "ACTIVE", "GRACE", "EXPIRED"] },
+        "timezone": { "type": "string", "default": "Asia/Jakarta" },
+        "locale": { "type": "string", "default": "id-ID" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "code", "name"]
+    },
+    "purchases": {
+      "title": "Purchase Order",
+      "description": "Distributor stock purchase orders",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "tenantId": { "type": "string" },
+        "poNumber": { "type": "string" },
+        "supplierName": { "type": "string" },
+        "itemName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "unit": { "type": "string" },
+        "unitPrice": { "type": "number" },
+        "totalPrice": { "type": "number" },
+        "paymentStatus": { "type": "string" },
+        "date": { "type": "string" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "poNumber", "supplierName", "itemName", "tenantId"]
+    },
+    "farm_identities": {
+      "title": "Farm Identity & Logo Settings",
+      "description": "Farm and company identity settings for invoices and letterheads",
+      "type": "object",
+      "properties": {
+        "tenantId": { "type": "string" },
+        "name": { "type": "string" },
+        "owner": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "npwp": { "type": "string" },
+        "bankName": { "type": "string" },
+        "bankAccount": { "type": "string" },
+        "logoUrl": { "type": "string" }
+      },
+      "required": ["tenantId", "name"]
+    }
+  }
+}

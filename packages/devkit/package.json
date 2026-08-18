@@ -1,0 +1,12 @@
+{
+  "name": "@tumbu/devkit",
+  "version": "0.0.1",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "../../apps/web/node_modules/.bin/tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@tumbu/contracts": "0.0.1"
+  }
+}

@@ -1,0 +1,960 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  STAFF
+  MEMBER
+  VIEWER
+  TECHNICIAN
+}
+
+enum BusinessType {
+  CULTIVATOR
+  SEED_DISTRIBUTOR
+  FEED_DISTRIBUTOR
+  EQUIPMENT_SUPPLIER
+  HARVEST_OFFTAKER
+  PROCESSED_FOOD_PRODUCER
+  LOGISTICS_TRANSPORTER
+  CONSULTANT_LAB_SERVICE
+}
+
+model User {
+  id                      String                   @id @default(uuid())
+  email                   String                   @unique
+  name                    String                   @default("")
+  phone                   String?
+  passwordHash            String                   @default("")
+  role                    String                   @default("OWNER")
+  tenantId                String
+  isPlatformAdmin         Boolean                  @default(false)
+  emailVerifiedAt         DateTime?
+  createdAt               DateTime                 @default(now())
+  updatedAt               DateTime                 @updatedAt
+  memberships             Membership[]
+  sessions                Session[]
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+}
+
+model Tenant {
+  id                  String               @id @default(uuid())
+  code                String               @unique
+  name                String
+  blueprint           String               @default("distributor")
+  businessType        BusinessType         @default(CULTIVATOR)
+  blueprintId         String               @default("operational_distributor")
+  modulesJson         String               @default("[]")
+  settingsJson        String               @default("{}")
+  status              String               @default("ACTIVE")
+  isActive            Boolean              @default(true)
+  planId              String?
+  commercialStatus    String               @default("TRIAL")
+  trialEndsAt         DateTime?
+  graceUntil          DateTime?
+  customTitle         String?
+  logoUrl             String?
+  address             String?
+  phone               String?
+  notes               String?
+  timezone            String               @default("Asia/Jakarta")
+  locale              String               @default("id-ID")
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  plan                PlatformPlan?        @relation(fields: [planId], references: [id])
+  memberships         Membership[]
+  products            Product[]
+  sizes               Size[]
+  partners            Partner[]
+  cashEntries         CashEntry[]
+  transactions        Transaction[]
+  closingPeriods      ClosingPeriod[]
+  beritaAcaras        BeritaAcara[]
+  suratJalans         SuratJalan[]
+  serviceItems        ServiceItem[]
+  assetUnits          AssetUnit[]
+  workOrders          WorkOrder[]
+  quotations          Quotation[]
+  aquaPonds           AquaPond[]
+  aquaCycles          AquaCultureCycle[]
+  aquaSpecies         AquaSpeciesProfile[]
+  aquaFeedTypes       AquaFeedType[]
+  aquaStrains         AquaStrain[]
+  aquaUnits           AquaUnit[]
+  aquaCostCategories  AquaCostCategory[]
+  aquaMortalityCauses AquaMortalityCause[]
+  aquaIndicatorRules  AquaIndicatorRule[]
+  invoices            PlatformInvoice[]
+
+  @@index([planId])
+}
+
+model Membership {
+  id        String   @id @default(uuid())
+  userId    String
+  tenantId  String
+  role      String   @default("STAFF")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+}
+
+model Session {
+  id              String   @id @default(uuid())
+  tokenHash       String   @unique
+  userId          String
+  email           String
+  name            String
+  role            String
+  tenantId        String
+  isPlatformAdmin Boolean  @default(false)
+  membershipRole  String   @default("STAFF")
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(uuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PlatformPlan {
+  id             String   @id @default(uuid())
+  code           String   @unique
+  name           String
+  description    String   @default("")
+  monthlyAmount  Decimal  @default(0)
+  trialDays      Int      @default(14)
+  priceMonthly   Decimal  @default(0)
+  priceYearly    Decimal  @default(0)
+  modulesJson    String   @default("[]")
+  workspaceQuota Int      @default(1)
+  maxPonds       Int      @default(10)
+  maxCycles      Int      @default(5)
+  maxMembers     Int      @default(3)
+  sortOrder      Int      @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  tenants        Tenant[]
+}
+
+model PlatformBillingProfile {
+  id               String   @id @default("default")
+  companyName      String?
+  legalName        String?
+  tagline          String?
+  address          String?
+  npwp             String?
+  bankName         String?
+  accountNumber    String?
+  accountName      String?
+  bankAccount      String?
+  bankHolder       String?
+  taxNumber        String?
+  email            String?
+  phone            String?
+  defaultPlanName  String   @default("")
+  defaultAmount    Decimal  @default(0)
+  dueDays          Int      @default(7)
+  graceDays        Int      @default(0)
+  remindBeforeDays Int      @default(3)
+  updatedAt        DateTime @updatedAt
+}
+
+model PlatformInvoice {
+  id                 String    @id @default(uuid())
+  number             String    @unique
+  tenantId           String
+  periodYm           String
+  planName           String    @default("")
+  description        String?
+  amount             Decimal
+  status             String    @default("UNPAID")
+  dueDate            DateTime?
+  issuedAt           DateTime  @default(now())
+  dueAt              DateTime  @default(now())
+  paidAt             DateTime?
+  notes              String?
+  paymentProvider    String?
+  paymentExternalId  String?
+  paymentProviderRef String?
+  paymentCheckoutUrl String?
+  paymentChannel     String?
+  proofFileBase64    String?
+  proofFileName      String?
+  proofMime          String?
+  proofUploadedAt    DateTime?
+  proofStatus        String    @default("NONE")
+  proofPath          String?
+  proofNote          String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, periodYm])
+}
+
+model ReminderDispatch {
+  id          String   @id @default(uuid())
+  tenantId    String
+  channel     String
+  recipient   String   @default("")
+  type        String   @default("")
+  kind        String?
+  dedupeKey   String?
+  invoiceId   String?
+  payloadJson String?
+  status      String   @default("SENT")
+  createdAt   DateTime @default(now())
+}
+
+model InterestLead {
+  id                String   @id @default(uuid())
+  name              String
+  email             String
+  phone             String?
+  company           String?
+  businessName      String
+  convertedTenantId String?
+  status            String   @default("NEW")
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  tenantId  String?
+  action    String
+  entity    String?
+  entityId  String?
+  metaJson  String?
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id                String   @id @default(uuid())
+  tenantId          String
+  name              String
+  unit              String   @default("ekor")
+  stock             Decimal  @default(0)
+  minStock          Decimal  @default(0)
+  price             Decimal  @default(0)
+  sizeLabel         String?
+  commodityCategory String?
+  species           String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model Size {
+  id        String   @id @default(uuid())
+  tenantId  String
+  label     String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, label])
+}
+
+model Partner {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  phone     String?
+  address   String?
+  notes     String?
+  type      String   @default("CUSTOMER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+model CashEntry {
+  id          String   @id @default(uuid())
+  tenantId    String
+  number      String?
+  date        DateTime @default(now())
+  category    String
+  description String
+  amount      Decimal
+  direction   String   @default("IN")
+  account     String   @default("CASH")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+}
+
+model Transaction {
+  id             String            @id @default(uuid())
+  tenantId       String
+  number         String
+  type           String            @default("SALE")
+  date           DateTime
+  partner        String
+  total          Decimal           @default(0)
+  paidAmount     Decimal           @default(0)
+  status         String            @default("PAID")
+  notes          String?
+  account        String            @default("CASH")
+  baId           String?
+  discountAmount Decimal           @default(0)
+  feeAmount      Decimal           @default(0)
+  metaJson       String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  tenant         Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  items          TransactionItem[]
+  fees           TransactionFee[]
+  settlements    Settlement[]
+
+  @@unique([tenantId, number])
+  @@index([tenantId, date])
+}
+
+model TransactionItem {
+  id                String      @id @default(uuid())
+  transactionId     String
+  productId         String
+  quantity          Decimal     @default(0)
+  price             Decimal     @default(0)
+  weight            Decimal     @default(0)
+  sampling          Decimal     @default(0)
+  flaseType         String?
+  flasePercent      Decimal?
+  bonusQty          Decimal     @default(0)
+  discountAmount    Decimal     @default(0)
+  sizeLabel         String?
+  unit              String      @default("ekor")
+  species           String?
+  commodityCategory String?
+  transaction       Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+model TransactionFee {
+  id            String      @id @default(uuid())
+  transactionId String
+  kind          String
+  label         String
+  amount        Decimal     @default(0)
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+model ClosingPeriod {
+  id                String   @id @default(uuid())
+  tenantId          String
+  periodYm          String
+  label             String?
+  notes             String?
+  totalPembelian    Decimal  @default(0)
+  totalPenjualan    Decimal  @default(0)
+  totalPengeluaran  Decimal  @default(0)
+  jumlahPembelian   Int      @default(0)
+  jumlahPenjualan   Int      @default(0)
+  jumlahPengeluaran Int      @default(0)
+  alreadyClosed     Boolean  @default(false)
+  closedAt          DateTime @default(now())
+  closedBy          String   @default("admin")
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, periodYm])
+}
+
+model BeritaAcara {
+  id             String            @id @default(uuid())
+  tenantId       String
+  number         String
+  date           DateTime
+  dateDepart     DateTime?
+  supplier       String
+  refNumber      String?
+  vehicle        String?
+  pondLocation   String?
+  checker        String            @default("")
+  adminName      String            @default("")
+  receiver       String?
+  plasePercent   Decimal           @default(0)
+  dpNote         Decimal           @default(0)
+  transport      Decimal           @default(0)
+  jasaBongkar    Decimal           @default(0)
+  upahSopir      Decimal           @default(0)
+  priorDebtNote  Decimal           @default(0)
+  priorDebtRef   String?
+  payMethodNote  String            @default("")
+  notaAktual     Decimal           @default(0)
+  totalPlase     Decimal           @default(0)
+  totalTagihan   Decimal           @default(0)
+  totalUangMasuk Decimal           @default(0)
+  sisaEstimasi   Decimal           @default(0)
+  totalAwal      Decimal           @default(0)
+  totalAktual    Decimal           @default(0)
+  notes          String?
+  status         String            @default("DRAFT")
+  purchaseId     String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  tenant         Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lines          BeritaAcaraLine[]
+
+  @@unique([tenantId, number])
+}
+
+model BeritaAcaraLine {
+  id            String      @id @default(uuid())
+  beritaAcaraId String
+  binNote       String?
+  sizeLabel     String
+  qtyInitial    Decimal     @default(0)
+  quantity      Decimal     @default(0)
+  price         Decimal     @default(0)
+  beritaAcara   BeritaAcara @relation(fields: [beritaAcaraId], references: [id], onDelete: Cascade)
+}
+
+model SuratJalan {
+  id          String           @id @default(uuid())
+  tenantId    String
+  number      String
+  date        DateTime
+  customer    String
+  saleRef     String?
+  destination String?
+  vehicle     String?
+  driver      String?
+  status      String           @default("ISSUED")
+  notes       String?
+  invoiceId   String?
+  createdAt   DateTime         @default(now())
+  tenant      Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lines       SuratJalanLine[]
+
+  @@unique([tenantId, number])
+}
+
+model SuratJalanLine {
+  id           String     @id @default(uuid())
+  suratJalanId String
+  productName  String
+  sizeLabel    String?
+  quantity     Decimal    @default(0)
+  bagCount     Decimal    @default(0)
+  binNote      String?
+  suratJalan   SuratJalan @relation(fields: [suratJalanId], references: [id], onDelete: Cascade)
+}
+
+model ServiceItem {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  category    String   @default("GENERAL")
+  unit        String   @default("unit")
+  price       Decimal  @default(0)
+  description String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model AssetUnit {
+  id            String    @id @default(uuid())
+  tenantId      String
+  partnerId     String?
+  locationLabel String
+  brand         String?
+  acType        String?
+  capacity      String?
+  serialNumber  String?
+  notes         String?
+  lastServiceAt DateTime?
+  nextServiceAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model WorkOrder {
+  id             String          @id @default(uuid())
+  tenantId       String
+  number         String
+  customerName   String
+  customerPhone  String?
+  serviceAddress String?
+  partnerId      String?
+  assetUnitId    String?
+  scheduleAt     DateTime?
+  assignedTo     String?
+  status         String          @default("NEW")
+  paymentStatus  String          @default("UNPAID")
+  subtotal       Decimal         @default(0)
+  discount       Decimal         @default(0)
+  extraCost      Decimal         @default(0)
+  total          Decimal         @default(0)
+  notes          String?
+  beforeNotes    String?
+  afterNotes     String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  tenant         Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lines          WorkOrderLine[]
+
+  @@unique([tenantId, number])
+}
+
+model WorkOrderLine {
+  id          String    @id @default(uuid())
+  workOrderId String
+  description String
+  itemType    String?
+  quantity    Decimal   @default(1)
+  unit        String    @default("unit")
+  unitPrice   Decimal   @default(0)
+  amount      Decimal   @default(0)
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+}
+
+model Quotation {
+  id             String    @id @default(uuid())
+  tenantId       String
+  number         String
+  customerName   String
+  customerPhone  String?
+  serviceAddress String?
+  notes          String?
+  discount       Decimal   @default(0)
+  subtotal       Decimal   @default(0)
+  total          Decimal   @default(0)
+  status         String    @default("SENT")
+  workOrderId    String?
+  validUntil     DateTime?
+  linesJson      String    @default("[]")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, number])
+}
+
+model DocCounter {
+  id        String   @id @default(uuid())
+  tenantId  String
+  docType   String
+  yymmdd    String
+  lastSeq   Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, docType, yymmdd])
+}
+
+model SyncIdempotency {
+  id             String   @id @default(uuid())
+  tenantId       String
+  idempotencyKey String
+  status         String   @default("PROCESSING")
+  response       String   @default("{}")
+  createdAt      DateTime @default(now())
+
+  @@unique([tenantId, idempotencyKey])
+}
+
+model PaymentWebhookEvent {
+  id          String   @id @default(uuid())
+  provider    String
+  eventId     String
+  status      String   @default("RECEIVED")
+  payloadJson String
+  notes       String?
+  invoiceId   String?
+  processed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@unique([provider, eventId])
+}
+
+model AquaPond {
+  id         String             @id @default(uuid())
+  tenantId   String
+  code       String
+  name       String
+  areaM2     Decimal?
+  volumeM3   Decimal?
+  location   String?
+  systemType String?
+  status     String             @default("IDLE")
+  notes      String?
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cycles     AquaCultureCycle[]
+
+  @@unique([tenantId, code])
+}
+
+model AquaSpeciesProfile {
+  id               String             @id @default(uuid())
+  tenantId         String
+  code             String
+  name             String
+  targetFcr        Decimal?
+  targetSrPct      Decimal?
+  defaultDensity   Decimal?
+  densityUnit      String?
+  typicalDays      Int?
+  typicalFcr       Decimal?
+  typicalSrPct     Decimal?
+  targetWeightGram Decimal?
+  defaultPriceHint Decimal?
+  notes            String?
+  isActive         Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  tenant           Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  cycles           AquaCultureCycle[]
+  strains          AquaStrain[]
+
+  @@unique([tenantId, code])
+}
+
+model AquaCultureCycle {
+  id                    String             @id @default(uuid())
+  tenantId              String
+  pondId                String
+  speciesProfileId      String
+  code                  String
+  state                 String             @default("PLANNED")
+  seedSupplierPartnerId String?
+  initialCapital        Decimal?
+  notes                 String?
+  targetSrPct           Decimal?
+  targetFcr             Decimal?
+  targetWeightGram      Decimal?
+  targetDays            Int?
+  targetBopAmount       Decimal?
+  targetHarvestKg       Decimal?
+  targetRevenue         Decimal?
+  categoryTargetsJson   String             @default("{}")
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  startedAt             DateTime?
+  tenant                Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pond                  AquaPond           @relation(fields: [pondId], references: [id])
+  speciesProfile        AquaSpeciesProfile @relation(fields: [speciesProfileId], references: [id])
+
+  @@unique([tenantId, code])
+}
+
+model AquaFeedType {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  brand        String?
+  unit         String   @default("kg")
+  proteinPct   Decimal?
+  pricePerKg   Decimal?
+  defaultPrice Decimal?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model AquaStrain {
+  id               String              @id @default(uuid())
+  tenantId         String
+  speciesProfileId String?
+  name             String
+  code             String?
+  notes            String?
+  isActive         Boolean             @default(true)
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  tenant           Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  speciesProfile   AquaSpeciesProfile? @relation(fields: [speciesProfileId], references: [id])
+}
+
+model AquaUnit {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  code      String?
+  symbol    String?
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model AquaCostCategory {
+  id            String             @id @default(uuid())
+  tenantId      String
+  name          String
+  code          String             @default("")
+  costClass     String             @default("")
+  costNature    String             @default("")
+  sortOrder     Int                @default(0)
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  expenseEvents AquaExpenseEvent[]
+}
+
+model AquaMortalityCause {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  code      String?
+  sortOrder Int      @default(0)
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model AquaIndicatorRule {
+  id               String   @id @default(uuid())
+  tenantId         String
+  metricCode       String
+  direction        String
+  greenBound       Decimal
+  yellowBound      Decimal
+  speciesProfileId String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  tenant           Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model AquaStockingEvent {
+  id                String   @id @default(uuid())
+  tenantId          String
+  cycleId           String
+  eventAt           DateTime
+  createdBy         String
+  notes             String?
+  recordStatus      String   @default("RECORDED")
+  quantityPcs       Decimal
+  averageWeightGram Decimal?
+  unitCost          Decimal?
+  totalCost         Decimal?
+  createdAt         DateTime @default(now())
+}
+
+model AquaFeedEvent {
+  id           String    @id @default(uuid())
+  tenantId     String
+  cycleId      String
+  eventAt      DateTime
+  createdBy    String
+  notes        String?
+  recordStatus String    @default("RECORDED")
+  feedTypeId   String
+  quantityKg   Decimal
+  unitCost     Decimal?
+  totalCost    Decimal?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  voidedAt     DateTime?
+  voidedBy     String?
+  voidReason   String?
+}
+
+model AquaSamplingEvent {
+  id                String    @id @default(uuid())
+  tenantId          String
+  cycleId           String
+  eventAt           DateTime
+  createdBy         String
+  notes             String?
+  recordStatus      String    @default("RECORDED")
+  averageWeightGram Decimal
+  sampleCountPcs    Decimal?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  voidedAt          DateTime?
+  voidedBy          String?
+  voidReason        String?
+}
+
+model AquaMortalityEvent {
+  id           String    @id @default(uuid())
+  tenantId     String
+  cycleId      String
+  eventAt      DateTime
+  createdBy    String
+  notes        String?
+  recordStatus String    @default("RECORDED")
+  deadCountPcs Decimal
+  cause        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  voidedAt     DateTime?
+  voidedBy     String?
+  voidReason   String?
+}
+
+model AquaHarvestEvent {
+  id           String    @id @default(uuid())
+  tenantId     String
+  cycleId      String
+  eventAt      DateTime
+  createdBy    String
+  notes        String?
+  recordStatus String    @default("RECORDED")
+  quantityKg   Decimal
+  quantityPcs  Decimal
+  grade        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  voidedAt     DateTime?
+  voidedBy     String?
+  voidReason   String?
+}
+
+model AquaExpenseEvent {
+  id           String           @id @default(uuid())
+  tenantId     String
+  cycleId      String
+  eventAt      DateTime
+  createdBy    String
+  notes        String?
+  recordStatus String           @default("RECORDED")
+  categoryId   String
+  amount       Decimal
+  description  String
+  partnerId    String?
+  source       String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  voidedAt     DateTime?
+  voidedBy     String?
+  voidReason   String?
+  category     AquaCostCategory @relation(fields: [categoryId], references: [id])
+}
+
+model AquaRevenueEvent {
+  id           String   @id @default(uuid())
+  tenantId     String
+  cycleId      String
+  eventAt      DateTime
+  createdBy    String
+  notes        String?
+  recordStatus String   @default("RECORDED")
+  amount       Decimal
+  description  String?
+  createdAt    DateTime @default(now())
+}
+
+model AquaMedicineEvent {
+  id            String    @id @default(uuid())
+  tenantId      String
+  cycleId       String
+  eventAt       DateTime
+  createdBy     String
+  notes         String?
+  recordStatus  String    @default("RECORDED")
+  treatmentKind String
+  productName   String
+  quantity      Decimal?
+  totalCost     Decimal?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  voidedAt      DateTime?
+  voidedBy      String?
+  voidReason    String?
+}
+
+model FinancialEvent {
+  id                    String   @id @default(uuid())
+  tenantId              String
+  sourceTransactionId   String
+  sourceTransactionType String
+  eventType             String
+  amount                Decimal
+  currency              String   @default("IDR")
+  occurredAt            DateTime
+  createdAt             DateTime @default(now())
+  correlationId         String
+  idempotencyKey        String   @unique
+  metaJson              String?
+
+  @@index([tenantId, sourceTransactionId])
+  @@index([tenantId, idempotencyKey])
+}
+
+model Settlement {
+  id                  String   @id @default(uuid())
+  tenantId            String
+  sourceTransactionId String
+  amount              Decimal
+  occurredAt          DateTime @default(now())
+  idempotencyKey      String   @unique
+
+  transaction         Transaction @relation(fields: [sourceTransactionId], references: [id])
+  @@index([tenantId, sourceTransactionId])
+}
+
+model JournalEntry {
+  id        String         @id @default(uuid())
+  tenantId  String
+  eventId   String         @unique
+  createdAt DateTime       @default(now())
+  lines     JournalLine[]
+}
+
+model JournalLine {
+  id              String       @id @default(uuid())
+  journalEntryId  String
+  accountId       String
+  debit           Decimal      @default(0)
+  credit          Decimal      @default(0)
+  journalEntry    JournalEntry @relation(fields: [journalEntryId], references: [id])
+}
+
+model AquaCycleCloseEvent {
+  id           String   @id @default(uuid())
+  tenantId     String
+  cycleId      String
+  eventAt      DateTime
+  createdBy    String
+  notes        String?
+  recordStatus String   @default("RECORDED")
+  createdAt    DateTime @default(now())
+}

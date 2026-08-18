@@ -1,0 +1,25 @@
+node_modules
+.next
+.git
+.agents
+.claude
+.codex
+.cursor
+.gemini
+_audit
+*.log
+
+# Environment secrets — jangan masuk image
+.env
+.env.*
+!.env.example
+
+# Firebase — sudah tidak digunakan
+firebase-applet-config.json
+.firebaserc
+firebase.json
+apphosting.yaml
+firestore.rules
+
+# Dev tools
+*.tsbuildinfo
