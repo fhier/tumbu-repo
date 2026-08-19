@@ -1,8 +1,8 @@
 // lib/offline/device.ts
 
-import { localDb } from './indexeddb';
+import { localDb, STORES } from './indexeddb';
 
-const DEVICE_STORE = 'device';
+const DEVICE_STORE = STORES.DEVICE;
 const DEVICE_KEY = 'current_device';
 
 interface DeviceRecord {

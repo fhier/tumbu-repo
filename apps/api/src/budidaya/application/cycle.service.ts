@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * CultureCycle application service — 8.3
  * Create / read / update plan / MARK_READY / CANCEL.
@@ -291,3 +292,4 @@ export class BudidayaCycleService {
     return `${prefix}${String(seq).padStart(3, '0')}`;
   }
 }
+

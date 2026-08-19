@@ -1,39 +1,48 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import WorkspaceSwitch from './workspace-switch';
+import { useWorkspaceRole } from './hooks/useWorkspaceRole';
+import BlueprintA from './blueprints/a/BlueprintA';
+import BlueprintB from './blueprints/b/BlueprintB';
 
-export default function AppRedirect() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace('/?pwa=true');
-  }, [router]);
+/** Unified workspace shell that renders the appropriate blueprint based on role */
+export default function AppShell() {
+  const role = useWorkspaceRole();
+
+  // Example workspace list – in real app this would be fetched from API/context
+  const workspaces = [
+    { id: 'PEMBUDIDAYA', name: 'Pembudidaya' },
+    { id: 'DISTRIBUTOR', name: 'Distributor' },
+  ];
+
+  const handleWorkspaceChange = (id: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tumbu_active_blueprint', id);
+      // Simplest way to apply the new role – reload page
+      window.location.reload();
+    }
+  };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: '#0F1E3A',
-      color: '#ffffff',
-      fontFamily: "'Inter', sans-serif"
-    }}>
-      <div style={{ textAlign: 'center' }}>
-        <div className="spinner" style={{
-          width: 32,
-          height: 32,
-          border: '3px solid rgba(255, 255, 255, 0.1)',
-          borderTopColor: '#0F9365',
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite',
-          margin: '0 auto 16px auto'
-        }} />
-        <p style={{ fontSize: 14, fontWeight: 600 }}>Menghubungkan ke TUMBU Mobile...</p>
-        <style dangerouslySetInnerHTML={{__html: `
-          @keyframes spin { to { transform: rotate(360deg); } }
-        `}} />
-      </div>
+    <div className="min-h-screen flex flex-col">
+      {/* Header with workspace switcher */}
+      <header className="bg-gray-800 text-white p-4 flex justify-between items-center">
+        <h1 className="text-xl font-semibold">TUMBU App</h1>
+        <WorkspaceSwitch
+          workspaces={workspaces}
+          value={
+            typeof window !== 'undefined'
+              ? localStorage.getItem('tumbu_active_blueprint') || 'PEMBUDIDAYA'
+              : 'PEMBUDIDAYA'
+          }
+          onChange={handleWorkspaceChange}
+        />
+      </header>
+
+      {/* Main content */}
+      <main className="flex-1 p-4">
+        {role === 'a' ? <BlueprintA /> : <BlueprintB />}
+      </main>
     </div>
   );
 }

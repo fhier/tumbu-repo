@@ -1,8 +1,8 @@
 // lib/offline/workspace.ts
 
-import { localDb } from './indexeddb';
+import { localDb, STORES } from './indexeddb';
 
-const WORKSPACE_STORE = 'workspace_context';
+const WORKSPACE_STORE = STORES.WORKSPACE_CONTEXT;
 const ACTIVE_WORKSPACE_KEY = 'active_workspace';
 
 export interface WorkspaceContextData {

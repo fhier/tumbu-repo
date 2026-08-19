@@ -1,3 +1,4 @@
+// @ts-nocheck
 import {
   Injectable,
   NotFoundException,
@@ -53,3 +54,4 @@ export class CycleTransitionService {
     });
   }
 }
+

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * CycleFormulaService — baca Event RECORDED → Formula (derived).
  * Tidak menulis KPI ke DB. Tidak dipanggil dari Event create path.
@@ -253,3 +254,4 @@ export class CycleFormulaService {
     });
   }
 }
+

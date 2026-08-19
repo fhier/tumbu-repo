@@ -3,7 +3,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { PrismaService } from '../prisma/prisma.service';
 import { seedDatabase } from './seed.helper';
 
-type Store = { tenantId: string; userId?: string };
+type Store = { tenantId: string; userId?: string; workspaceId?: string };
 
 @Injectable()
 export class TenantContext implements OnModuleInit {
@@ -34,14 +34,18 @@ export class TenantContext implements OnModuleInit {
     return this.als.getStore()?.userId;
   }
 
-  run<T>(tenantId: string, fn: () => T, userId?: string): T {
-    return this.als.run({ tenantId, userId }, fn);
+  get workspaceId(): string | undefined {
+    return this.als.getStore()?.workspaceId;
+  }
+
+  run<T>(tenantId: string, fn: () => T, userId?: string, workspaceId?: string): T {
+    return this.als.run({ tenantId, userId, workspaceId }, fn);
   }
 
   /** Prefer session tenant; do not flip global isActive. */
   async resolveBootstrap() {
     if (this.bootstrapId) return this.bootstrapId;
-    const any = await this.prisma.tenant.findFirst({ orderBy: { createdAt: 'asc' } });
+    const any = await this.prisma.workspace.findFirst({ orderBy: { createdAt: 'asc' } });
     this.bootstrapId = any?.id || '';
     return this.bootstrapId;
   }

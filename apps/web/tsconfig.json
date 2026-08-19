@@ -17,7 +17,10 @@
     "paths": {
       "@/*": ["./src/*"],
       "@tumbu/contracts": ["../../packages/contracts/src"],
-      "@tumbu/devkit": ["../../packages/devkit/src"]
+      "@tumbu/devkit": ["../../packages/devkit/src"],
+      "@tumbu/core": ["../../packages/core/src"],
+      "@tumbu/domain": ["../../packages/domain/src"],
+      "@tumbu/knowledge": ["../../packages/knowledge/src"]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

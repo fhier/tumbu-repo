@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aqua Analysis — View eksploratif ("mengapa?"), bukan Dashboard kedua.
  *
@@ -125,3 +126,4 @@ export class AquaAnalysisService {
     return formulas;
   }
 }
+

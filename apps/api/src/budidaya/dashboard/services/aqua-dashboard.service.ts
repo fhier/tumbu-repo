@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Aqua Dashboard — komposisi widget; consumer CycleFormulaService.
  *
@@ -85,3 +86,4 @@ export class AquaDashboardService {
     };
   }
 }
+

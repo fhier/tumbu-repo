@@ -15,6 +15,6 @@ describe('PlatformService.blueprints', () => {
     );
 
     await expect(service.blueprints('tenant-b')).rejects.toBeInstanceOf(ForbiddenException);
-    expect(prisma.tenant.findUnique).not.toHaveBeenCalled();
+    expect(prisma.workspace.findUnique).not.toHaveBeenCalled();
   });
 });

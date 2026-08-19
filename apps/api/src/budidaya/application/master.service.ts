@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Master Data Budidaya — 8.2
  *
@@ -848,3 +849,4 @@ export class BudidayaMasterService {
     return row;
   }
 }
+

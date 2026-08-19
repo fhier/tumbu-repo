@@ -21,6 +21,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@google/genai": "^2.17.0",
+    "@nestjs/config": "^4.0.4",
     "uuid": "^14.0.1"
   },
   "description": "",
@@ -29,6 +30,7 @@
     "doc": "docs"
   },
   "devDependencies": {
+    "@types/node": "^26.2.0",
     "concurrently": "^10.0.5"
   },
   "keywords": [],

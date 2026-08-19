@@ -1,10 +1,10 @@
 // features/sync/outbox.ts
 
-import { localDb } from '../../lib/offline/indexeddb';
+import { localDb, STORES } from '../../lib/offline/indexeddb';
 import { LocalOutboxRecord, SyncCommand } from './sync-types';
 
-const STORE_OUTBOX = 'outbox';
-const STORE_ARCHIVE = 'outbox_archive';
+const STORE_OUTBOX = STORES.OUTBOX;
+const STORE_ARCHIVE = STORES.OUTBOX_ARCHIVE;
 
 /**
  * Menambahkan command baru ke antrean outbox lokal dengan status PENDING

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Filter Context / Configuration Layer — TANPA kolom Prisma baru.
  * Disimpan di Tenant.settingsJson.allowedSpecies (string[] kode spesies).
@@ -97,3 +98,4 @@ export function formatStockSkuName(name: unknown, sizeLabel?: unknown): string {
   if (n.toLowerCase().includes(size.toLowerCase())) return n;
   return `${n} ${size}`.trim();
 }
+

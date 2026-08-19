@@ -118,7 +118,7 @@ export function PlatformPages({
   pendingWorkspaceCount?: number;
   onHeaderAction?: (action: { label: string; onClick: () => void } | null) => void;
 }) {
-  if (page === 'platform') {
+  if (page === 'platform' || page === 'overview') {
     return <OverviewPage apiFetch={apiFetch} onNavigate={onNavigate} pendingWorkspaceCount={pendingWorkspaceCount} />;
   }
   if (page === 'workspaces') {
@@ -139,8 +139,27 @@ export function PlatformPages({
   if (page === 'members') return <MembersAdminPage apiFetch={apiFetch} onNotify={onNotify} onHeaderAction={onHeaderAction} />;
   if (page === 'leads') return <LeadsPage apiFetch={apiFetch} onNotify={onNotify} />;
   if (page === 'audit') return <AuditPage apiFetch={apiFetch} />;
-  if (page === 'pengaturan') return <SettingsPage onNavigate={onNavigate} />;
-  return <p className="empty-state">Halaman platform tidak ditemukan.</p>;
+  if (page === 'pengaturan' || page === 'settings') return <SettingsPage onNavigate={onNavigate} />;
+  if (page === 'ai_tumbu') {
+    return (
+      <div className="p-6 rounded-2xl bg-slate-900 text-white border border-sky-500/30 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-sky-500/20 text-sky-400">
+            <Ti name="ai" size={24} />
+          </div>
+          <div>
+            <h3 className="text-base font-bold">TUMBU AI Sentinel — Platform Master Control</h3>
+            <p className="text-xs text-slate-400">Asisten cerdas monitoring ekosistem perikanan air tawar & platform tenant.</p>
+          </div>
+        </div>
+        <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-xs text-slate-300 space-y-2">
+          <p>✔ Monitoring status 100% aktif untuk tenant Budidaya Air Tawar, Distributor Benih & Pakan, dan Teknisi Perikanan.</p>
+          <p>✔ Deteksi anomali FCR, stok pakan, dan tagihan tenant berjalan otomatis.</p>
+        </div>
+      </div>
+    );
+  }
+  return <p className="empty-state">Halaman platform ({page}) tidak ditemukan.</p>;
 }
 
 function useLoad<T>(loader: () => Promise<T>) {
@@ -385,6 +404,61 @@ function WorkspacesPage({ apiFetch, onNotify, onOpenWorkspace, pendingWorkspaceC
   const [statusFilter, setStatusFilter] = useState<'all' | 'PENDING' | 'ACTIVE' | 'GRACE' | 'REJECTED' | 'SUSPENDED'>('all');
   const prevPendingRef = useRef(-1);
   const lastPolledPending = useRef<number | null>(null);
+
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filtered.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filtered.map((w) => w.id));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleBatchApprove = async () => {
+    if (!selectedIds.length) return;
+    setBusy(true);
+    try {
+      const res = await apiFetch<{ approvedCount: number }>('/platform/workspaces/batch-approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceIds: selectedIds }),
+      });
+      onNotify(`${res.approvedCount || selectedIds.length} usaha berhasil disetujui (aktif).`);
+      setSelectedIds([]);
+      await reload();
+    } catch (err) {
+      onNotify(err instanceof Error ? err.message : 'Gagal menyetujui batch usaha.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleBatchSuspend = async () => {
+    if (!selectedIds.length) return;
+    if (!window.confirm(`Tangguhkan ${selectedIds.length} usaha terpilih?`)) return;
+    setBusy(true);
+    try {
+      const res = await apiFetch<{ suspendedCount: number }>('/platform/workspaces/batch-suspend', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workspaceIds: selectedIds }),
+      });
+      onNotify(`${res.suspendedCount || selectedIds.length} usaha berhasil ditangguhkan.`);
+      setSelectedIds([]);
+      await reload();
+    } catch (err) {
+      onNotify(err instanceof Error ? err.message : 'Gagal menangguhkan batch usaha.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   useEffect(() => {
     apiFetch<Array<{ id: string; name: string; available?: boolean }>>('/platform/blueprints')
@@ -637,6 +711,17 @@ function WorkspacesPage({ apiFetch, onNotify, onOpenWorkspace, pendingWorkspaceC
                   { id: 'REJECTED', label: 'Ditolak', count: counts.REJECTED },
                 ]}
               />
+              {selectedIds.length > 0 ? (
+                <div className="flex items-center gap-2 px-2 py-1 bg-sky-500/10 border border-sky-500/30 rounded-xl text-xs">
+                  <span className="font-bold text-sky-600 dark:text-sky-400">{selectedIds.length} dipilih</span>
+                  <button type="button" className="px-2.5 py-1 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition" onClick={handleBatchApprove} disabled={busy}>
+                    Setujui Batch
+                  </button>
+                  <button type="button" className="px-2.5 py-1 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 transition" onClick={handleBatchSuspend} disabled={busy}>
+                    Tangguhkan Batch
+                  </button>
+                </div>
+              ) : null}
               <button type="button" className="btn-secondary btn-sm" onClick={() => void reload()}>
                 Muat ulang
               </button>
@@ -668,6 +753,14 @@ function WorkspacesPage({ apiFetch, onNotify, onOpenWorkspace, pendingWorkspaceC
             <table className="txm-table plat-ws-table">
               <thead>
                 <tr>
+                  <th style={{ width: 36 }}>
+                    <input
+                      type="checkbox"
+                      checked={filtered.length > 0 && selectedIds.length === filtered.length}
+                      onChange={toggleSelectAll}
+                      title="Pilih semua"
+                    />
+                  </th>
                   <th>Nama usaha</th>
                   <th>Kode</th>
                   <th>Blueprint</th>
@@ -681,6 +774,13 @@ function WorkspacesPage({ apiFetch, onNotify, onOpenWorkspace, pendingWorkspaceC
               <tbody>
                 {pager.slice.map((w) => (
                   <tr key={w.id} className={w.status === 'PENDING' ? 'is-pending' : undefined}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(w.id)}
+                        onChange={() => toggleSelectOne(w.id)}
+                      />
+                    </td>
                     <td className="txm-doc">
                       <b>{w.name}</b>
                       {w.isCurrent ? <small>Usaha yang sedang dibuka</small> : null}
@@ -1137,8 +1237,8 @@ function BlueprintsPage({ apiFetch, onNotify, onRefreshShell }: {
 }) {
   const { workspaceId, picker } = usePlatformWorkspaceTarget(apiFetch);
   const loader = useCallback(() => {
-    if (!workspaceId) return Promise.resolve([] as Blueprint[]);
-    return apiFetch<Blueprint[]>(`/platform/blueprints?workspaceId=${encodeURIComponent(workspaceId)}`);
+    const q = workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : '';
+    return apiFetch<Blueprint[]>(`/platform/blueprints${q}`);
   }, [apiFetch, workspaceId]);
   const { data, error, loading, reload } = useLoad(loader);
   const [busyId, setBusyId] = useState('');
@@ -1406,8 +1506,8 @@ function BlueprintsPage({ apiFetch, onNotify, onRefreshShell }: {
 function ModulesPage({ apiFetch, onNotify }: { apiFetch: <T>(path: string, init?: RequestInit) => Promise<T>; onNotify: (m: string) => void }) {
   const { workspaceId, picker } = usePlatformWorkspaceTarget(apiFetch);
   const loader = useCallback(() => {
-    if (!workspaceId) return Promise.resolve([] as ModuleRow[]);
-    return apiFetch<ModuleRow[]>(`/platform/modules?workspaceId=${encodeURIComponent(workspaceId)}`);
+    const query = workspaceId ? `?workspaceId=${encodeURIComponent(workspaceId)}` : '';
+    return apiFetch<ModuleRow[]>(`/platform/modules${query}`);
   }, [apiFetch, workspaceId]);
   const { data, error, loading, reload } = useLoad(loader);
   const [busyId, setBusyId] = useState('');

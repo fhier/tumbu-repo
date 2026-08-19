@@ -128,28 +128,27 @@ const AC: ServiceSkinConfig = {
 
 /** Registration id → skin (presentation lookup only). */
 const BY_CATALOG_ID: Record<string, ServiceSkinConfig> = {
-  salon_kamar_mandi: SALON,
-  cuci_sofa_furniture: SOFA,
-  cuci_ac: AC,
+  service_teknisi_perikanan: AC,
+  service_jasa: AC,
 };
 
 export const DEFAULT_SERVICE_SKIN: ServiceSkinConfig = {
-  skinKey: 'salon',
-  displayName: 'Blueprint Jasa',
-  tagline: 'Operasional layanan',
-  navLabels: { assets: 'Unit servis' },
-  pageTitles: { assets: 'Unit servis' },
+  skinKey: 'ac',
+  displayName: 'Teknisi & Jasa Perikanan',
+  tagline: 'Layanan instalasi, maintenance aerator/pompa, & tes air kolam',
+  navLabels: { assets: 'Peralatan / Unit' },
+  pageTitles: { assets: 'Unit & Peralatan Kolam' },
   emptyStates: {
-    assetsOff: 'Modul unit servis tidak aktif pada konfigurasi usaha ini.',
+    assetsOff: 'Modul unit & peralatan tidak aktif pada konfigurasi usaha ini.',
   },
   assetFieldLabels: {
-    locationLabel: 'Lokasi',
-    brand: 'Merek',
-    type: 'Tipe',
-    capacity: 'Kapasitas',
-    serial: 'Serial',
+    locationLabel: 'Lokasi / Kolam',
+    brand: 'Merek Equipment',
+    type: 'Tipe (Aerator/Pompa)',
+    capacity: 'Kapasitas (HP/Watt)',
+    serial: 'No. Seri / Kode Unit',
   },
-  notifyAssetSaved: 'Unit servis disimpan.',
+  notifyAssetSaved: 'Unit peralatan disimpan.',
 };
 
 export function skinForBlueprint(blueprintId?: string | null): ServiceSkinConfig {

@@ -4,6 +4,7 @@ import { authApi, platformApi, erpApi, cycleApi, serviceApi, tumbuFetch } from '
 import { PlatformPages } from './platform-pages';
 import { DistributorPages } from './distributor-pages';
 import { AquaPages } from './aqua-pages';
+import { ServicePages } from './service-pages';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sun, Moon, ArrowRight, Check, Zap, Database, Smartphone,
@@ -148,10 +149,17 @@ export type BusinessType = 'CULTIVATOR' | 'SEED_DISTRIBUTOR' | 'FEED_DISTRIBUTOR
 function getModulesForBusiness(type?: string): any[] {
   if (!type) return DISTRIBUTOR_MODULES; // Fallback
   
-  switch (type.toLowerCase()) {
+  const t = type.toLowerCase();
+  switch (t) {
     case 'budidaya':
     case 'cultivator': 
-        return BUDIDAYA_MODULES;
+      return BUDIDAYA_MODULES;
+    case 'service':
+    case 'service_jasa':
+    case 'service_teknisi_perikanan':
+    case 'consultant_lab_service':
+    case 'jasa':
+      return SERVICE_MODULES;
     case 'distributor':
     case 'seed_distributor':
     case 'feed_distributor':
@@ -161,6 +169,25 @@ function getModulesForBusiness(type?: string): any[] {
       return DISTRIBUTOR_MODULES; 
   }
 }
+
+// 1.5. BACKEND MODULES UNTUK TEKNISI & JASA PERIKANAN
+const SERVICE_MODULES = [
+  { id: 'dashboard', label: 'Dashboard Layanan', icon: LayoutDashboard, category: 'DASHBOARD' },
+  { id: 'customers', label: 'Pelanggan', icon: Users, category: 'OPERASIONAL' },
+  { id: 'services', label: 'Katalog Layanan', icon: Layers, category: 'OPERASIONAL' },
+  { id: 'quotations', label: 'Penawaran & Survey', icon: FileText, category: 'OPERASIONAL' },
+  { id: 'orders', label: 'Pesanan / Work Order', icon: CheckCircle2, category: 'OPERASIONAL' },
+  { id: 'schedule', label: 'Jadwal Kerja', icon: Activity, category: 'OPERASIONAL' },
+  { id: 'technicians', label: 'Teknisi / Tim', icon: UserCheck, category: 'OPERASIONAL' },
+  { id: 'assets', label: 'Unit & Peralatan', icon: Cpu, category: 'OPERASIONAL' },
+  { id: 'kas', label: 'Kas & Bank', icon: CreditCard, category: 'KEUANGAN' },
+  { id: 'pengeluaran', label: 'Biaya Operasional', icon: DollarSign, category: 'KEUANGAN' },
+  { id: 'invoice', label: 'Invoice & Pembayaran', icon: FileCheck, category: 'KEUANGAN' },
+  { id: 'keuangan', label: 'Laba Rugi', icon: TrendingUp, category: 'KEUANGAN' },
+  { id: 'laporan', label: 'Laporan', icon: BarChart3, category: 'DATA' },
+  { id: 'members', label: 'Anggota Usaha', icon: UserPlus, category: 'SISTEM' },
+  { id: 'settings', label: 'Pengaturan Usaha', icon: Settings, category: 'SISTEM' },
+];
 
 // 2. BACKEND MODULES UNTUK BUDIDAYA AIR TAWAR
 const BUDIDAYA_MODULES = [
@@ -180,12 +207,16 @@ const BUDIDAYA_MODULES = [
 
 // 3. BACKEND MODULES UNTUK PLATFORM ADMIN MASTER
 const PLATFORM_MODULES = [
-  { id: 'overview', label: 'Ringkasan Platform', icon: LayoutDashboard, category: 'CONTROL PLANE' },
+  { id: 'overview', label: 'Control Center', icon: LayoutDashboard, category: 'CONTROL PLANE' },
   { id: 'workspaces', label: 'Daftar Workspace Member', icon: Building2, category: 'CONTROL PLANE' },
+  { id: 'leads', label: 'Daftar Minat / Leads', icon: Activity, category: 'CONTROL PLANE' },
   { id: 'blueprints', label: 'Katalog Blueprint Usaha', icon: Layers, category: 'KONFIGURASI' },
-  { id: 'billing', label: 'Profil Billing & Paket', icon: CreditCard, category: 'KEUANGAN PLATFORM' },
+  { id: 'modules', label: 'Modul System Master', icon: Boxes, category: 'KONFIGURASI' },
+  { id: 'plans', label: 'Paket Langganan', icon: CreditCard, category: 'KEUANGAN PLATFORM' },
+  { id: 'billing', label: 'Profil Billing & Tagihan', icon: FileText, category: 'KEUANGAN PLATFORM' },
+  { id: 'members', label: 'Anggota & Akses Master', icon: Users, category: 'AKSES & KEAMANAN' },
+  { id: 'audit', label: 'Audit Trail & Log System', icon: ShieldCheck, category: 'AKSES & KEAMANAN' },
   { id: 'settings', label: 'Pengaturan System Master', icon: Settings, category: 'SISTEM MASTER' },
-  { id: 'audit', label: 'Audit Trail & Log System', icon: ShieldCheck, category: 'KEAMANAN' },
   { id: 'ai_tumbu', label: 'AI TUMBU PLATFORM', icon: Bot, category: 'CONTROL PLANE' },
 ];
 
@@ -3696,6 +3727,19 @@ export default function Page() {
                         blueprintName={activeWorkspace?.blueprint?.name || activeWorkspace?.blueprintName}
                         allowedSpecies={activeWorkspace?.allowedSpecies || []}
                         onNavigate={setWorkspaceModuleTab}
+                      />
+                    ) : ['SERVICE', 'SERVICE_JASA', 'SERVICE_TEKNISI_PERIKANAN', 'JASA'].includes((activeWorkspace?.jenisUsaha || activeWorkspace?.blueprint?.kind || '').toUpperCase()) || (activeWorkspace?.blueprintId || '').includes('service') ? (
+                      <ServicePages
+                        page={workspaceModuleTab}
+                        apiFetch={apiFetch}
+                        onNotify={showToast}
+                        blueprintId={activeWorkspace?.blueprintId || activeWorkspace?.blueprint?.id}
+                        modules={activeWorkspace?.modules || activeWorkspace?.blueprint?.modules || []}
+                        workspaceName={activeWorkspace?.name}
+                        workspaceTagline={activeWorkspace?.tagline}
+                        workspaceLogoUrl={activeWorkspace?.logoUrl}
+                        userName={currentUser?.name || currentUser?.email || authEmail}
+                        userRole={activeWorkspace?.role || 'STAFF'}
                       />
                     ) : (
                       <DistributorPages

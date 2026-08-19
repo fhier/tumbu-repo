@@ -95,12 +95,21 @@ export class PlatformController {
   }
 
   @Roles('PLATFORM_ADMIN')
-  @Post('workspaces/suspend') suspendWorkspace(
+  @Post('workspaces/batch-approve') batchApproveWorkspaces(
     @Body() body: object,
     @Headers('authorization') authorization?: string,
   ) {
     const token = authorization?.replace(/^Bearer\s+/i, '');
-    return this.platform.suspendWorkspace(body as { workspaceId?: string }, token);
+    return this.platform.batchApproveWorkspaces(body as { workspaceIds?: string[] }, token);
+  }
+
+  @Roles('PLATFORM_ADMIN')
+  @Post('workspaces/batch-suspend') batchSuspendWorkspaces(
+    @Body() body: object,
+    @Headers('authorization') authorization?: string,
+  ) {
+    const token = authorization?.replace(/^Bearer\s+/i, '');
+    return this.platform.batchSuspendWorkspaces(body as { workspaceIds?: string[] }, token);
   }
 
   @Post('workspaces/activate') activateWorkspace(@Body() body: object, @Headers('authorization') authorization?: string) {

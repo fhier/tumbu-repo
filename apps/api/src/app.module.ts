@@ -1,31 +1,27 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
+import { PrismaModule } from './prisma/prisma.module';
+import { AuthModule } from './auth/auth.module';
+import { PlatformModule } from './platform/platform.module';
+import { BudidayaModule } from './budidaya/budidaya.module';
+import { ErpModule } from './erp/erp.module';
+import { PaymentModule } from './payment/payment.module';
+import { HealthModule } from './health/health.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { HealthModule } from './health/health.module';
-import { ErpModule } from './erp/erp.module';
-import { PlatformModule } from './platform/platform.module';
-import { AuthModule } from './auth/auth.module';
-import { PrismaModule } from './prisma/prisma.module';
-import { ServiceModule } from './service/service.module';
-import { PaymentModule } from './payment/payment.module';
-import { BudidayaModule } from './budidaya/budidaya.module';
-import { EmailModule } from './email/email.module';
-import { SyncModule } from './modules/sync/sync.module';
-import { ReceiptModule } from './modules/receipt/receipt.module';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     PrismaModule,
     HealthModule,
-    EmailModule,
-    ErpModule,
-    PlatformModule,
     AuthModule,
-    ServiceModule,
-    PaymentModule,
+    PlatformModule,
     BudidayaModule,
-    SyncModule,
-    ReceiptModule,
+    ErpModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

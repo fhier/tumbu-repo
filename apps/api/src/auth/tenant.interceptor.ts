@@ -13,7 +13,12 @@ export class TenantInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     const req = context.switchToHttp().getRequest();
     const session = req.tumbuSession as { tenantId?: string; userId?: string } | undefined;
-    const tenantId = session?.tenantId || this.tenant.tryTenantId();
+    
+    // Extract headers for fallback or consistent override
+    const headerTenantId = req.headers['x-tenant-id'] as string | undefined;
+    const headerWorkspaceId = req.headers['x-workspace-id'] as string | undefined;
+
+    const tenantId = headerTenantId || session?.tenantId || this.tenant.tryTenantId();
     const userId = session?.userId;
 
     return from(
@@ -21,6 +26,7 @@ export class TenantInterceptor implements NestInterceptor {
         tenantId,
         async () => lastValueFrom(next.handle()),
         userId,
+        headerWorkspaceId,
       ),
     );
   }
