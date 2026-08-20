@@ -54,28 +54,38 @@ type PlanRow = {
 type Blueprint = { id: string; name: string; categoryLabel: string; description: string; active: boolean; available: boolean };
 type ModuleRow = { id: string; name: string; layerLabel: string; statusLabel: string; enabled: boolean; pages: string[] };
 type Settings = { name: string; code: string; phone: string; address: string; timezone: string; locale: string; blueprintName: string; workspaceId?: string };
-type WsOpt = { id: string; name: string; code: string };
+type WsOpt = { id: string; name: string; code: string; businessType?: string; status?: string };
 
-/** Picker workspace target untuk operasi Control Plane (blueprint/modul/settings). */
 function usePlatformWorkspaceTarget(apiFetch: <T>(path: string, init?: RequestInit) => Promise<T>) {
   const [workspaces, setWorkspaces] = useState<WsOpt[]>([]);
   const [workspaceId, setWorkspaceId] = useState('');
   useEffect(() => {
-    apiFetch<Array<{ id: string; name: string; code: string }>>('/platform/workspaces')
+    apiFetch<Array<{ id: string; name: string; code: string; businessType?: string; status?: string }>>('/platform/workspaces')
       .then((rows) => {
-        setWorkspaces(rows.map((w) => ({ id: w.id, name: w.name, code: w.code })));
+        setWorkspaces(rows.map((w) => ({ id: w.id, name: w.name, code: w.code, businessType: w.businessType, status: w.status })));
         setWorkspaceId((prev) => prev || (rows[0]?.id ?? ''));
       })
       .catch(() => { setWorkspaces([]); });
   }, [apiFetch]);
   const picker = (
-    <label className="txm-toolbar-field">
-      <span>Usaha target</span>
-      <select value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} required>
-        <option value="" disabled>— Pilih usaha —</option>
-        {workspaces.map((w) => (
-          <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
-        ))}
+    <label className="txm-toolbar-field font-medium text-xs">
+      <span className="font-bold text-[var(--text)]">🎯 Target Workspace:</span>
+      <select
+        value={workspaceId}
+        onChange={(e) => setWorkspaceId(e.target.value)}
+        required
+        className="px-3 py-1.5 rounded-xl bg-[var(--card)] border border-[var(--border-strong)] text-xs font-semibold text-[var(--text)] shadow-sm focus:border-[#0EA5E9]"
+      >
+        <option value="" disabled>— Pilih Target Usaha Member —</option>
+        {workspaces.map((w) => {
+          const kindLabel = w.businessType === 'CULTIVATOR' ? '🌱 Budidaya' : '🚚 Distributor';
+          const statusBadge = w.status === 'ACTIVE' ? '✅ Aktif' : w.status === 'PENDING' ? '⏳ Pending' : '🔒 Suspend';
+          return (
+            <option key={w.id} value={w.id}>
+              {w.name} · [{kindLabel}] ({statusBadge})
+            </option>
+          );
+        })}
       </select>
     </label>
   );
