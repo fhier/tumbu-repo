@@ -172,17 +172,14 @@ export class AuthService {
 
   async ensureAccountsTenant() {
     return this.prisma.workspace.upsert({
-      where: { code: '_tumbu_accounts' },
+      where: { slug: '_tumbu_accounts' },
       create: {
-        code: '_tumbu_accounts',
+        slug: '_tumbu_accounts',
         name: 'TUMBU Accounts',
-        blueprint: 'Accounts',
-        blueprintId: 'operational_distributor',
-        modulesJson: '[]',
+        businessType: 'DISTRIBUTOR',
         status: 'SUSPENDED',
-        isActive: false,
       },
-      update: { name: 'TUMBU Accounts', isActive: false, status: 'SUSPENDED' },
+      update: { name: 'TUMBU Accounts', status: 'SUSPENDED' },
     });
   }
 
