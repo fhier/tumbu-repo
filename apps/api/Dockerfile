@@ -40,6 +40,8 @@ FROM node:20-alpine AS runtime
 
 WORKDIR /app
 
+RUN apk add --no-cache openssl libc6-compat
+
 ENV NODE_ENV=production
 
 # Install hanya production dependencies
