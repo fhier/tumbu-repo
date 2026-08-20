@@ -938,6 +938,7 @@ export default function Page() {
     setWorkspaceName(workspace.name || 'Usaha Saya');
     setWorkspaceStatus(workspace.status || null);
     localStorage.setItem('tumbu-active-workspace', JSON.stringify(workspace));
+    localStorage.setItem('tumbu_active_workspace', JSON.stringify(workspace));
 
     void fetchWorkspaceMembers(workspace.id);
 
@@ -1120,16 +1121,21 @@ export default function Page() {
       setWorkspaceName(resolved.name || '');
       setWorkspaceStatus(resolved.status || null);
       localStorage.setItem('tumbu-active-workspace', JSON.stringify(resolved));
+      localStorage.setItem('tumbu_active_workspace', JSON.stringify(resolved));
       if (resolved.blueprintId === BLUEPRINT_IDS.budidaya) setView('budidaya');
       else setView('distributor');
     };
 
     const restoreSession = async () => {
-      const token = localStorage.getItem('tumbu-token');
+      const token = localStorage.getItem('tumbu-token') || localStorage.getItem('tumbu_token');
       if (!token) return;
       try {
         const result = await authApi.me(token);
         if (cancelled) return;
+
+        localStorage.setItem('tumbu-token', token);
+        localStorage.setItem('tumbu_token', token);
+
         setAuthToken(token);
         setCurrentUser(result.user || null);
         setWorkspaces(Array.isArray(result.workspaces) ? result.workspaces : []);
@@ -1139,20 +1145,38 @@ export default function Page() {
           return;
         }
 
-        // const storedActive = localStorage.getItem('tumbu-active-workspace');
-        // if (storedActive) {
-        //   const workspace = JSON.parse(storedActive);
-        //   await activateWorkspaceWithToken(token, workspace);
-        //   return;
-        // }
-        setView('landing');
+        const storedActive = localStorage.getItem('tumbu-active-workspace') || localStorage.getItem('tumbu_active_workspace');
+        if (storedActive) {
+          try {
+            const workspace = JSON.parse(storedActive);
+            await activateWorkspaceWithToken(token, workspace);
+            return;
+          } catch {
+            // fall through to workspace auto-select
+          }
+        }
+
+        const enterable = (result.workspaces || []).filter((w: any) =>
+          w.status === 'ACTIVE' || w.status === 'GRACE' ||
+          (w.isActive && w.status !== 'SUSPENDED' && w.status !== 'PENDING' && w.status !== 'REJECTED')
+        );
+
+        if (enterable.length >= 1) {
+          await activateWorkspaceWithToken(token, enterable[0]);
+          return;
+        }
+
+        setView('distributor');
       } catch {
         if (cancelled) return;
         localStorage.removeItem('tumbu-token');
+        localStorage.removeItem('tumbu_token');
         localStorage.removeItem('tumbu-user');
         localStorage.removeItem('tumbu-workspaces');
         localStorage.removeItem('tumbu-active-workspace');
+        localStorage.removeItem('tumbu_active_workspace');
         setAuthToken(null);
+        setView('landing');
       }
     };
 

@@ -182,6 +182,7 @@ export default function LandingPage({ onEnterDashboard }: { onEnterDashboard?: (
       if (!token) throw new Error('Token tidak diterima dari server.');
       
       localStorage.setItem('tumbu_token', token);
+      localStorage.setItem('tumbu-token', token);
 
       // STEP B: Create workspace
       const wsRes = await fetch(`${apiBaseUrl}/platform/my/workspaces`, {
