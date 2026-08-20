@@ -59,4 +59,4 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 
 # Jalankan Next.js standalone server
-CMD ["node", "apps/web/server.js"]
+CMD ["sh", "-c", "if [ -f apps/web/server.js ]; then node apps/web/server.js; elif [ -f server.js ]; then node server.js; else find . -name server.js -exec node {} \\;; fi"]
