@@ -28,10 +28,13 @@ async function generateVertexAiResponse(promptText: string, systemInstructionTex
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      systemInstruction: {
+        parts: [{ text: systemInstructionText }],
+      },
       contents: [
         {
           role: 'user',
-          parts: [{ text: `[SYSTEM INSTRUCTION]\n${systemInstructionText}\n\n[USER INPUT]:\n${promptText}` }],
+          parts: [{ text: promptText }],
         },
       ],
     }),
