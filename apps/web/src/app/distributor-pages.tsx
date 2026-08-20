@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import {
   PenjualanPanel, PembelianPanel, PengeluaranPanel,
   SuratJalanPanel, BeritaAcaraPanel, KeuanganPanel,
-  LaporanPanel, KwitansiPanel, CompanySettings, ClosingPanel
+  LaporanPanel, KwitansiPanel, CompanySettings, ClosingPanel,
+  DistributorDashboardPanel
 } from './distributor-panels';
 import { KasBankPanel, DuePanel } from './kas-due-panels';
 
@@ -17,11 +18,11 @@ export function DistributorPages({
   apiFetch: <T>(path: string, init?: RequestInit) => Promise<T>;
   onNotify: (msg: string) => void;
 }) {
-  const resolvedPage = !page || page === 'dashboard' ? 'penjualan' : page;
+  const resolvedPage = !page ? 'dashboard' : page;
   const [distributorTab, setDistributorTab] = useState(resolvedPage);
   
   useEffect(() => {
-    const nextTab = !page || page === 'dashboard' ? 'penjualan' : page;
+    const nextTab = !page ? 'dashboard' : page;
     setDistributorTab(nextTab);
   }, [page]);
   
@@ -98,7 +99,10 @@ export function DistributorPages({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ padding: 24, overflowY: 'auto' }}>
-        {(distributorTab === 'penjualan' || distributorTab === 'dashboard') && (
+        {distributorTab === 'dashboard' && (
+          <DistributorDashboardPanel sales={sales} purchases={purchases} cash={cash} products={products} sizes={sizes} onNavigate={setDistributorTab} />
+        )}
+        {distributorTab === 'penjualan' && (
           <PenjualanPanel apiFetch={apiFetch} onNotify={onNotify} products={products} customers={customers} sales={sales} onRefresh={fetchData} />
         )}
         {distributorTab === 'pembelian' && (

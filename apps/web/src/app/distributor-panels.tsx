@@ -1429,3 +1429,122 @@ export function ClosingPanel({ apiFetch, onNotify }: { apiFetch: <T>(p: string, 
     </div>
   );
 }
+
+export function DistributorDashboardPanel({
+  sales = [],
+  purchases = [],
+  cash = [],
+  products = [],
+  sizes = [],
+  onNavigate,
+}: {
+  sales: any[];
+  purchases: any[];
+  cash: any[];
+  products: any[];
+  sizes: any[];
+  onNavigate?: (tab: string) => void;
+}) {
+  const totalOmset = useMemo(() => sales.reduce((sum, s) => sum + Number(s.total || s.amount || 0), 0), [sales]);
+  const totalPembelian = useMemo(() => purchases.reduce((sum, p) => sum + Number(p.total || p.amount || 0), 0), [purchases]);
+  const totalKasMasuk = useMemo(() => cash.filter((c: any) => c.direction === 'IN').reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0), [cash]);
+  const totalKasKeluar = useMemo(() => cash.filter((c: any) => c.direction === 'OUT').reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0), [cash]);
+  const piutangBerjalan = useMemo(() => sales.filter((s: any) => s.status === 'DUE' || s.status === 'DP').reduce((sum: number, s: any) => sum + Number(s.remaining || (s.total - (s.paidAmount || 0)) || 0), 0), [sales]);
+
+  return (
+    <div className="txm space-y-6">
+      <div className="txm-head">
+        <div className="txm-head-copy">
+          <div className="txm-crumb">DISTRIBUTOR BENIH</div>
+          <h2>Executive Dashboard Operations</h2>
+          <p className="txm-hint">Ringkasan transaksi, kas, piutang, dan pergerakan stok benih real-time.</p>
+        </div>
+        <div className="txm-head-actions gap-2">
+          <button type="button" className="btn-primary" onClick={() => onNavigate?.('penjualan')}>+ Transaksi Penjualan</button>
+          <button type="button" className="btn-secondary" onClick={() => onNavigate?.('suratjalan')}>+ Surat Jalan</button>
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="clay rounded-[20px] p-5 space-y-2 border-l-4 border-l-[#0EA5E9]">
+          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Total Omset Penjualan</span>
+          <div className="text-2xl font-extrabold text-[#0EA5E9]">{money(totalOmset)}</div>
+          <small className="text-xs text-[var(--text-muted)]">{sales.length} Transaksi Terlibat</small>
+        </div>
+
+        <div className="clay rounded-[20px] p-5 space-y-2 border-l-4 border-l-[#22C55E]">
+          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Pembelian Benih (PO)</span>
+          <div className="text-2xl font-extrabold text-[#22C55E]">{money(totalPembelian)}</div>
+          <small className="text-xs text-[var(--text-muted)]">{purchases.length} Pembelian Supplier</small>
+        </div>
+
+        <div className="clay rounded-[20px] p-5 space-y-2 border-l-4 border-l-[#F8BF24]">
+          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Piutang Pelanggan</span>
+          <div className="text-2xl font-extrabold text-amber-500">{money(piutangBerjalan)}</div>
+          <small className="text-xs text-amber-500 font-medium">Belum Lunas / Tempo</small>
+        </div>
+
+        <div className="clay rounded-[20px] p-5 space-y-2 border-l-4 border-l-indigo-500">
+          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">Arus Kas Bersih</span>
+          <div className="text-2xl font-extrabold text-indigo-500">{money(totalKasMasuk - totalKasKeluar)}</div>
+          <small className="text-xs text-[var(--text-muted)]">In: {money(totalKasMasuk)} · Out: {money(totalKasKeluar)}</small>
+        </div>
+      </div>
+
+      {/* Quick Action Bar */}
+      <div className="clay rounded-[20px] p-5 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <span className="text-sm font-bold text-[var(--text)]">Aksi Cepat Operasional:</span>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('penjualan')}>Penjualan</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('pembelian')}>Pembelian PO</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('suratjalan')}>Surat Jalan</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('beritaacara')}>Berita Acara</button>
+          <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('pengeluaran')}>Kas & Pengeluaran</button>
+        </div>
+      </div>
+
+      {/* Recent Transactions List */}
+      <div className="txm-table-card">
+        <div className="txm-list-head">
+          <h3 className="txm-list-title">Penjualan Terakhir</h3>
+          <button type="button" className="btn-ghost btn-sm" onClick={() => onNavigate?.('penjualan')}>Lihat Semua →</button>
+        </div>
+        <div className="txm-table-scroll">
+          <table className="txm-table">
+            <thead>
+              <tr>
+                <th>No. Transaksi</th>
+                <th>Tanggal</th>
+                <th>Pelanggan</th>
+                <th>Nominal</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sales.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="txm-empty">Belum ada transaksi penjualan recorded. Klik "+ Transaksi Penjualan" untuk mencatat.</td>
+                </tr>
+              ) : (
+                sales.slice(0, 5).map((s: any) => (
+                  <tr key={s.id}>
+                    <td className="txm-doc">{s.number || s.id}</td>
+                    <td>{s.date ? String(s.date).slice(0, 10) : '-'}</td>
+                    <td>{s.partner || s.customerName || '-'}</td>
+                    <td className="font-bold">{money(Number(s.total || s.amount || 0))}</td>
+                    <td>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${s.status === 'PAID' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-amber-500/10 text-amber-600'}`}>
+                        {s.status === 'PAID' ? 'LUNAS' : 'TEMPO / DP'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
