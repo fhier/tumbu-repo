@@ -132,25 +132,25 @@ export class AuthService {
     if (isPlatformAdmin) {
       const rows = await this.prisma.workspace.findMany({ orderBy: { name: 'asc' } });
       return rows
-        .filter((t) => t.code !== '_tumbu_accounts')
+        .filter((t) => t.slug !== '_tumbu_accounts')
         .map((t) => ({
-          id: t.id, code: t.code, name: t.name, blueprintId: t.blueprintId, blueprint: t.blueprint,
-          role: 'PLATFORM_ADMIN', isActive: t.isActive, status: t.status,
-          statusLabel: labelWorkspaceStatus(t.status),
+          id: t.id, code: t.slug, name: t.name, blueprintId: t.businessType, blueprint: t.businessType,
+          role: 'PLATFORM_ADMIN', isActive: t.status === 'ACTIVE', status: t.status,
+          statusLabel: t.status,
         }));
     }
     const mems = await this.prisma.workspaceMember.findMany({
       where: { userId },
-      include: { tenant: true },
-      orderBy: { createdAt: 'asc' },
+      include: { workspace: true },
+      orderBy: { joinedAt: 'asc' },
     });
     return mems
-      .filter((m) => m.tenant.code !== '_tumbu_accounts')
+      .filter((m) => m.workspace.slug !== '_tumbu_accounts')
       .map((m) => ({
-        id: m.tenant.id, code: m.tenant.code, name: m.tenant.name,
-        blueprintId: m.tenant.blueprintId, blueprint: m.tenant.blueprint, role: m.role,
-        isActive: m.tenant.isActive, status: m.tenant.status,
-        statusLabel: labelWorkspaceStatus(m.tenant.status),
+        id: m.workspace.id, code: m.workspace.slug, name: m.workspace.name,
+        blueprintId: m.workspace.businessType, blueprint: m.workspace.businessType, role: m.role,
+        isActive: m.workspace.status === 'ACTIVE', status: m.workspace.status,
+        statusLabel: m.workspace.status,
       }));
   }
 
@@ -241,21 +241,19 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: {
         email,
-        name,
+        fullName: name,
         role: 'OWNER',
-        tenantId: accounts.id,
         passwordHash: hashPassword(password),
-        isPlatformAdmin: false,
-        emailVerifiedAt: null,
+        isActive: true,
       },
     });
-    const verification = await this.issueEmailVerification(user);
+    const verification = await this.issueEmailVerification({ id: user.id, email: user.email, name: user.fullName });
     void this.email.sendSafe({
       kind: 'WELCOME',
       to: user.email,
-      name: user.name,
+      name: user.fullName,
     });
-    const session = await this.issueSession(user, accounts.id, 'OWNER', 'setup');
+    const session = await this.issueSession({ id: user.id, email: user.email, name: user.fullName, role: 'OWNER', isPlatformAdmin: false }, accounts.id, 'OWNER', 'setup');
     return { ...session, verification };
   }
 
@@ -388,26 +386,23 @@ export class AuthService {
       throw new UnauthorizedException('Email atau kata sandi tidak sesuai.');
     }
 
-    const workspaces = await this.workspacesForUser(user.id, user.isPlatformAdmin);
-    const enterable = workspaces.filter((w) => w.status === 'ACTIVE' || w.status === 'GRACE' || (w.isActive && w.status !== 'SUSPENDED' && w.status !== 'PENDING' && w.status !== 'REJECTED'));
-    let tenantId = user.tenantId;
+    const isPlatformAdmin = user.role === 'SUPER_ADMIN';
+    const workspaces = await this.workspacesForUser(user.id, isPlatformAdmin);
+    const enterable = workspaces.filter((w) => w.status === 'ACTIVE' || w.isActive);
+    let tenantId = 'default';
     let membershipRole = user.role;
     let land: 'platform' | 'workspace' | 'selector' | 'setup' = 'workspace';
 
-    if (user.isPlatformAdmin) {
+    if (isPlatformAdmin) {
       land = 'platform';
       membershipRole = 'PLATFORM_ADMIN';
       const accounts = await this.ensureAccountsTenant();
-      tenantId = (user.tenantId && user.tenantId.trim()) ? user.tenantId : accounts.id;
+      tenantId = accounts.id;
     } else if (enterable.length === 0) {
-      // Belum ada workspace ACTIVE (mungkin hanya PENDING) → setup / tunggu approval
       land = 'setup';
       const accounts = await this.ensureAccountsTenant();
       tenantId = accounts.id;
       membershipRole = 'OWNER';
-      if (user.tenantId !== accounts.id) {
-        await this.prisma.user.update({ where: { id: user.id }, data: { tenantId: accounts.id } });
-      }
     } else if (enterable.length > 1) {
       land = 'selector';
       tenantId = enterable[0].id;
@@ -418,7 +413,7 @@ export class AuthService {
       membershipRole = enterable[0].role;
     }
 
-    return this.issueSession(user, tenantId, membershipRole, land);
+    return this.issueSession({ id: user.id, email: user.email, name: user.fullName, role: user.role, isPlatformAdmin }, tenantId, membershipRole, land);
   }
 
   async logout(token?: string) {
