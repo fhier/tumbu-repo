@@ -69,4 +69,4 @@ COPY --from=builder /app/packages ./packages
 EXPOSE 3001
 
 # Jalankan API
-CMD ["node", "apps/api/dist/main"]
+CMD ["sh", "-c", "if [ -f apps/api/dist/main.js ]; then node apps/api/dist/main.js; elif [ -f apps/api/dist/src/main.js ]; then node apps/api/dist/src/main.js; else find apps/api/dist -name main.js -exec node {} \\;; fi"]
