@@ -48,10 +48,56 @@ model User {
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
-  workspaces       WorkspaceMember[]
-  auditLogs        AuditLog[]
+  workspaces              WorkspaceMember[]
+  auditLogs               AuditLog[]
+  sessions                Session[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
 
   @@map("users")
+}
+
+model Session {
+  id             String   @id @default(cuid())
+  userId         String
+  tokenHash      String   @unique
+  tenantId       String?
+  role           String
+  membershipRole String
+  land           String   @default("workspace")
+  expiresAt      DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model EmailVerificationToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 model Workspace {
