@@ -323,13 +323,17 @@ function ItemRows({
   );
 }
 
-export function PembelianPanel({ products, sizes = [], suppliers, purchases, beritaAcara, apiFetch, onNotify, onRefresh, canDelete = false, allowedSpecies = [] }: {
+export function PembelianPanel({ products = [], sizes = [], suppliers = [], purchases = [], beritaAcara = [], apiFetch, onNotify, onRefresh, canDelete = false, allowedSpecies = [] }: {
   products: Product[]; sizes?: Array<{ id: string; label: string }>; suppliers: Partner[]; purchases: Transaction[]; beritaAcara: BeritaAcara[];
   onPurchase?: (e: FormEvent<HTMLFormElement>) => void;
   apiFetch: <T>(p: string, i?: RequestInit) => Promise<T>; onNotify: (m: string) => void; onRefresh: () => void;
   canDelete?: boolean;
   allowedSpecies?: string[];
 }) {
+  const safeProducts = Array.isArray(products) ? products : [];
+  const safeSuppliers = Array.isArray(suppliers) ? suppliers : [];
+  const safePurchases = Array.isArray(purchases) ? purchases : [];
+  const safeBeritaAcara = Array.isArray(beritaAcara) ? beritaAcara : [];
   const [editId, setEditId] = useState('');
   const [baId, setBaId] = useState('');
   const [sumber, setSumber] = useState<'manual' | 'ba'>('manual');
@@ -721,13 +725,16 @@ export function PembelianPanel({ products, sizes = [], suppliers, purchases, ber
   );
 }
 
-export function PenjualanPanel({ products, sizes = [], customers, sales, apiFetch, onNotify, onRefresh, canDelete = false, allowedSpecies = [] }: {
+export function PenjualanPanel({ products = [], sizes = [], customers = [], sales = [], apiFetch, onNotify, onRefresh, canDelete = false, allowedSpecies = [] }: {
   products: Product[]; sizes?: Array<{ id: string; label: string }>; customers: Partner[]; sales: Transaction[];
   onSale?: (e: FormEvent<HTMLFormElement>) => void;
   apiFetch: <T>(p: string, i?: RequestInit) => Promise<T>; onNotify: (m: string) => void; onRefresh: () => void;
   canDelete?: boolean;
   allowedSpecies?: string[];
 }) {
+  const safeProducts = Array.isArray(products) ? products : [];
+  const safeCustomers = Array.isArray(customers) ? customers : [];
+  const safeSales = Array.isArray(sales) ? sales : [];
   const [editId, setEditId] = useState('');
   const [tanggal, setTanggal] = useState(todayISO());
   const [partner, setPartner] = useState('');

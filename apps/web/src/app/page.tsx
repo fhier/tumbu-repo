@@ -5,6 +5,7 @@ import { PlatformPages } from './platform-pages';
 import { DistributorPages } from './distributor-pages';
 import { AquaPages } from './aqua-pages';
 import { ServicePages } from './service-pages';
+import { AkarFloatingWidget } from './AkarFloatingWidget';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Sun, Moon, ArrowRight, Check, Zap, Database, Smartphone,
@@ -230,7 +231,19 @@ export default function Page() {
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [selectedBlueprint, setSelectedBlueprint] = useState<BlueprintChoice>('distributor');
   const [platformTab, setPlatformTab] = useState<'overview' | 'billing' | 'settings' | 'audit' | 'ai_tumbu'>('overview');
-  const [workspaceModuleTab, setWorkspaceModuleTab] = useState<string>('dashboard');
+  const [workspaceModuleTab, setWorkspaceModuleTabState] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('tumbu-active-tab') || 'dashboard';
+    }
+    return 'dashboard';
+  });
+
+  const setWorkspaceModuleTab = useCallback((tab: string) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('tumbu-active-tab', tab);
+    }
+    setWorkspaceModuleTabState(tab);
+  }, []);
   const [dashboardAiPrompt, setDashboardAiPrompt] = useState<string>('');
   const [budidayaStateFilter, setBudidayaStateFilter] = useState<'ALL' | 'GROWING' | 'HARVESTED' | 'CLOSED'>('ALL');
   const [toast, setToast] = useState<string | null>(null);
@@ -1113,17 +1126,35 @@ export default function Page() {
   useEffect(() => {
     let cancelled = false;
     const activateWorkspaceWithToken = async (token: string, workspace: any) => {
-      const context = await platformApi.activateWorkspace(token, workspace.id);
+      const targetId = workspace?.id || workspace?.workspaceId || workspace?.tenantId;
+      let context: any = null;
+      if (targetId) {
+        try {
+          context = await platformApi.activateWorkspace(token, targetId);
+        } catch (e) {
+          // Keep local workspace session active if activation API fails/times out
+        }
+      }
       setWorkspaceContext(context || null);
       if (cancelled) return;
-      const resolved = { ...workspace, ...(context?.workspace || {}), blueprintId: context?.blueprint?.id || workspace.blueprintId };
+      const resolved = {
+        ...(workspace || {}),
+        ...(context?.workspace || {}),
+        id: targetId || workspace?.id,
+        blueprintId: context?.blueprint?.id || workspace?.blueprintId || workspace?.blueprint?.id,
+      };
       setActiveWorkspace(resolved);
-      setWorkspaceName(resolved.name || '');
+      setWorkspaceName(resolved.name || 'Workspace Saya');
       setWorkspaceStatus(resolved.status || null);
       localStorage.setItem('tumbu-active-workspace', JSON.stringify(resolved));
       localStorage.setItem('tumbu_active_workspace', JSON.stringify(resolved));
-      if (resolved.blueprintId === BLUEPRINT_IDS.budidaya) setView('budidaya');
-      else setView('distributor');
+
+      const bpId = String(resolved.blueprintId || '').toLowerCase();
+      if (bpId === BLUEPRINT_IDS.budidaya || bpId.includes('budidaya') || bpId.includes('pembudidaya')) {
+        setView('budidaya');
+      } else {
+        setView('distributor');
+      }
     };
 
     const restoreSession = async () => {
@@ -7376,6 +7407,14 @@ export default function Page() {
           </motion.div>
         </div>
       )}
+
+      {/* FLOATING AI SENTINEL CHAT WIDGET */}
+      <AkarFloatingWidget
+        authToken={authToken}
+        activeWorkspace={activeWorkspace}
+        apiFetch={apiFetch}
+        onNotify={showToast}
+      />
     </div>
   );
 }

@@ -35,15 +35,15 @@ export function AkarFloatingWidget({
     }
   }, [messages, open]);
 
-  const handleSend = async (e?: React.FormEvent) => {
+  const handleSend = async (e?: React.FormEvent, customPrompt?: string) => {
     e?.preventDefault();
-    const prompt = input.trim();
+    const prompt = (customPrompt || input).trim();
     if (!prompt || loading) return;
 
     const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     const userMsg = { sender: 'user' as const, text: prompt, time: timeStr };
     setMessages((prev) => [...prev, userMsg]);
-    setInput('');
+    if (!customPrompt) setInput('');
     setLoading(true);
 
     try {

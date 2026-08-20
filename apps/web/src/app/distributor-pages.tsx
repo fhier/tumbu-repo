@@ -50,26 +50,33 @@ export function DistributorPages({
         resProducts, resCustomers, resSuppliers, resSizes,
         resSales, resPurchases, resCash, resBa, resSj
       ] = await Promise.all([
-        apiFetch<any[]>('/erp/products').catch(() => []),
-        apiFetch<any[]>('/erp/partners?type=CUSTOMER').catch(() => []),
-        apiFetch<any[]>('/erp/partners?type=SUPPLIER').catch(() => []),
-        apiFetch<any[]>('/erp/sizes').catch(() => []),
-        apiFetch<any[]>('/erp/transactions?type=SALE').catch(() => []),
-        apiFetch<any[]>('/erp/transactions?type=PURCHASE').catch(() => []),
-        apiFetch<any[]>('/erp/cash').catch(() => []),
-        apiFetch<any[]>('/erp/berita-acara').catch(() => []),
-        apiFetch<any[]>('/erp/surat-jalan').catch(() => [])
+        apiFetch<any>('/erp/products').catch(() => []),
+        apiFetch<any>('/erp/partners?type=CUSTOMER').catch(() => []),
+        apiFetch<any>('/erp/partners?type=SUPPLIER').catch(() => []),
+        apiFetch<any>('/erp/sizes').catch(() => []),
+        apiFetch<any>('/erp/transactions?type=SALE').catch(() => []),
+        apiFetch<any>('/erp/transactions?type=PURCHASE').catch(() => []),
+        apiFetch<any>('/erp/cash').catch(() => []),
+        apiFetch<any>('/erp/berita-acara').catch(() => []),
+        apiFetch<any>('/erp/surat-jalan').catch(() => [])
       ]);
 
-      setProducts(resProducts);
-      setCustomers(resCustomers);
-      setSuppliers(resSuppliers);
-      setSizes(resSizes);
-      setSales(resSales);
-      setPurchases(resPurchases);
-      setCash(resCash);
-      setBeritaAcara(resBa);
-      setSuratJalan(resSj);
+      const safeArray = (res: any) => {
+        if (Array.isArray(res)) return res;
+        if (res && Array.isArray(res.data)) return res.data;
+        if (res && Array.isArray(res.items)) return res.items;
+        return [];
+      };
+
+      setProducts(safeArray(resProducts));
+      setCustomers(safeArray(resCustomers));
+      setSuppliers(safeArray(resSuppliers));
+      setSizes(safeArray(resSizes));
+      setSales(safeArray(resSales));
+      setPurchases(safeArray(resPurchases));
+      setCash(safeArray(resCash));
+      setBeritaAcara(safeArray(resBa));
+      setSuratJalan(safeArray(resSj));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat data ERP');
       onNotify('Gagal memuat data dari server.');
@@ -121,10 +128,10 @@ export function DistributorPages({
           <KasBankPanel cash={cash} apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
         )}
         {distributorTab === 'kwitansi' && (
-          <KwitansiPanel transactions={[...sales, ...purchases]} cash={cash} beritaAcara={beritaAcara} apiFetch={apiFetch} onNotify={onNotify} />
+          <KwitansiPanel transactions={[...(sales || []), ...(purchases || [])]} cash={cash || []} beritaAcara={beritaAcara || []} apiFetch={apiFetch} onNotify={onNotify} />
         )}
         {(distributorTab === 'hutang' || distributorTab === 'receivable' || distributorTab === 'payable' || distributorTab === 'due') && (
-          <DuePanel payables={purchases.filter(p => p.status === 'DUE' || p.status === 'DP')} receivables={sales.filter(s => s.status === 'DUE' || s.status === 'DP')} apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
+          <DuePanel payables={(purchases || []).filter(p => p && (p.status === 'DUE' || p.status === 'DP'))} receivables={(sales || []).filter(s => s && (s.status === 'DUE' || s.status === 'DP'))} apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
         )}
         {(distributorTab === 'tutupbuku' || distributorTab === 'closing') && (
           <ClosingPanel apiFetch={apiFetch} onNotify={onNotify} />
