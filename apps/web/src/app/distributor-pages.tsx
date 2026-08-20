@@ -6,6 +6,7 @@ import {
   SuratJalanPanel, BeritaAcaraPanel, KeuanganPanel,
   LaporanPanel, KwitansiPanel, CompanySettings, ClosingPanel
 } from './distributor-panels';
+import { KasBankPanel, DuePanel } from './kas-due-panels';
 
 export function DistributorPages({
   page,
@@ -16,8 +17,6 @@ export function DistributorPages({
   apiFetch: <T>(path: string, init?: RequestInit) => Promise<T>;
   onNotify: (msg: string) => void;
 }) {
-  // Gunakan 'penjualan' sebagai default jika page adalah 'dashboard' atau kosong, 
-  // karena DistributorPages belum memiliki komponen dashboard spesifik.
   const resolvedPage = !page || page === 'dashboard' ? 'penjualan' : page;
   const [distributorTab, setDistributorTab] = useState(resolvedPage);
   
@@ -98,9 +97,8 @@ export function DistributorPages({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Internal nav dihilangkan karena navigasi sekarang dikendalikan oleh AppSidebar */}
       <div style={{ padding: 24, overflowY: 'auto' }}>
-        {distributorTab === 'penjualan' && (
+        {(distributorTab === 'penjualan' || distributorTab === 'dashboard') && (
           <PenjualanPanel apiFetch={apiFetch} onNotify={onNotify} products={products} customers={customers} sales={sales} onRefresh={fetchData} />
         )}
         {distributorTab === 'pembelian' && (
@@ -115,13 +113,25 @@ export function DistributorPages({
         {distributorTab === 'pengeluaran' && (
           <PengeluaranPanel apiFetch={apiFetch} onNotify={onNotify} cash={cash} onRefresh={fetchData} />
         )}
+        {distributorTab === 'kas' && (
+          <KasBankPanel cash={cash} apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
+        )}
+        {distributorTab === 'kwitansi' && (
+          <KwitansiPanel transactions={[...sales, ...purchases]} cash={cash} beritaAcara={beritaAcara} apiFetch={apiFetch} onNotify={onNotify} />
+        )}
+        {distributorTab === 'hutang' && (
+          <DuePanel payables={purchases.filter(p => p.status === 'DUE' || p.status === 'DP')} receivables={sales.filter(s => s.status === 'DUE' || s.status === 'DP')} apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
+        )}
+        {(distributorTab === 'tutupbuku' || distributorTab === 'closing') && (
+          <ClosingPanel apiFetch={apiFetch} onNotify={onNotify} />
+        )}
         {distributorTab === 'keuangan' && (
           <KeuanganPanel apiFetch={apiFetch} onNotify={onNotify} />
         )}
         {distributorTab === 'laporan' && (
           <LaporanPanel apiFetch={apiFetch} onNotify={onNotify} />
         )}
-        {distributorTab === 'pengaturan' && (
+        {(distributorTab === 'pengaturan' || distributorTab === 'master' || distributorTab === 'stok' || distributorTab === 'backup') && (
           <CompanySettings apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
         )}
       </div>
