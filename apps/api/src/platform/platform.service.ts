@@ -57,7 +57,7 @@ export class PlatformService {
   ) {}
 
   private async tenantRow() {
-    return this.prisma.tenant.findUniqueOrThrow({ where: { id: this.tenant.tryTenantId() } });
+    return this.prisma.workspace.findUniqueOrThrow({ where: { id: this.tenant.tryTenantId() } });
   }
 
   /**
@@ -68,7 +68,7 @@ export class PlatformService {
     if (!workspaceId || !String(workspaceId).trim()) {
       throw new BadRequestException('workspaceId wajib untuk operasi workspace ini.');
     }
-    const row = await this.prisma.tenant.findUnique({ where: { id: String(workspaceId).trim() } });
+    const row = await this.prisma.workspace.findUnique({ where: { id: String(workspaceId).trim() } });
     if (!row) throw new BadRequestException('Workspace tidak ditemukan.');
     if (row.code === '_tumbu_accounts') {
       throw new BadRequestException('Pilih workspace bisnis (bukan akun Control Plane).');
@@ -277,7 +277,7 @@ export class PlatformService {
       if (input.id === 'dashboard') throw new BadRequestException('Modul Dashboard tidak dapat dinonaktifkan.');
       set.delete(input.id!);
     }
-    await this.prisma.tenant.update({ where: { id: t.id }, data: { modulesJson: JSON.stringify([...set]) } });
+    await this.prisma.workspace.update({ where: { id: t.id }, data: { modulesJson: JSON.stringify([...set]) } });
     await this.audit.log({ action: 'module.toggle', tenantId: t.id, entity: 'module', entityId: input.id, meta: { enabled: input.enabled } });
     return this.modules(t.id);
   }
@@ -361,14 +361,14 @@ export class PlatformService {
   async assignWorkspacePlan(input: { workspaceId?: string; planId?: string } = {}) {
     if (!input.workspaceId?.trim()) throw new BadRequestException('workspaceId wajib.');
     const plan = await this.resolvePlan(input.planId);
-    const row = await this.prisma.tenant.findUnique({ where: { id: String(input.workspaceId).trim() } });
+    const row = await this.prisma.workspace.findUnique({ where: { id: String(input.workspaceId).trim() } });
     if (!row || row.code === '_tumbu_accounts') throw new BadRequestException('Workspace tidak ditemukan.');
     const bp = blueprintById(row.blueprintId);
     const planMods = parsePlanModules(plan.modulesJson);
     const nextModules = intersectModules(bp.modules, planMods);
     const trialEndsAt = new Date();
     trialEndsAt.setDate(trialEndsAt.getDate() + plan.trialDays);
-    const updated = await this.prisma.tenant.update({
+    const updated = await this.prisma.workspace.update({
       where: { id: row.id },
       data: {
         planId: plan.id,
@@ -431,7 +431,7 @@ export class PlatformService {
     const bp = blueprintById(input.blueprintId || DEFAULT_BLUEPRINT_ID);
     if (!isSelectableBlueprint(bp)) throw new BadRequestException('Blueprint tidak tersedia untuk workspace baru.');
     const code = (input.code || input.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || `ws-${Date.now()}`;
-    if (await this.prisma.tenant.findUnique({ where: { code } })) throw new BadRequestException('Kode workspace sudah dipakai.');
+    if (await this.prisma.workspace.findUnique({ where: { code } })) throw new BadRequestException('Kode workspace sudah dipakai.');
     const plan = await this.resolvePlan(input.planId);
     const planMods = parsePlanModules(plan.modulesJson);
     const modules = intersectModules(bp.modules, planMods);
@@ -456,7 +456,7 @@ export class PlatformService {
       speciesTier,
     };
     if (allowedSpecies.length) settingsSeed.allowedSpecies = allowedSpecies;
-    const created = await this.prisma.tenant.create({
+    const created = await this.prisma.workspace.create({
       data: {
         name: input.name.trim(), code, blueprint: bp.name, blueprintId: bp.id,
         modulesJson: JSON.stringify(modules.length ? modules : planMods),
@@ -580,7 +580,7 @@ export class PlatformService {
         : prev.completedAt,
       lastVisitedAt: new Date().toISOString(),
     };
-    await this.prisma.tenant.update({
+    await this.prisma.workspace.update({
       where: { id: t.id },
       data: {
         settingsJson: JSON.stringify({
@@ -596,7 +596,7 @@ export class PlatformService {
     id?: string; name?: string; phone?: string; address?: string; blueprintId?: string; isActive?: boolean;
   } = {}) {
     if (!input.id) throw new BadRequestException('ID workspace wajib.');
-    const row = await this.prisma.tenant.findUnique({ where: { id: input.id } });
+    const row = await this.prisma.workspace.findUnique({ where: { id: input.id } });
     if (!row) throw new BadRequestException('Workspace tidak ditemukan.');
     if (row.code === '_tumbu_accounts') throw new BadRequestException('Control Plane tidak dapat diubah lewat endpoint ini.');
     const data: Record<string, unknown> = {};
@@ -619,7 +619,7 @@ export class PlatformService {
       data.blueprint = bp.name;
       data.modulesJson = JSON.stringify(bp.modules);
     }
-    const updated = await this.prisma.tenant.update({ where: { id: row.id }, data });
+    const updated = await this.prisma.workspace.update({ where: { id: row.id }, data });
     await this.audit.log({
       action: typeof input.isActive === 'boolean'
         ? (input.isActive ? 'workspace.approve' : 'workspace.suspend')
@@ -643,11 +643,11 @@ export class PlatformService {
       throw new BadRequestException('Status tidak valid. Gunakan PENDING, ACTIVE, REJECTED, atau SUSPENDED.');
     }
     const status = input.status as WorkspaceStatus;
-    const row = await this.prisma.tenant.findUnique({ where: { id: String(input.workspaceId).trim() } });
+    const row = await this.prisma.workspace.findUnique({ where: { id: String(input.workspaceId).trim() } });
     if (!row) throw new BadRequestException('Workspace tidak ditemukan.');
     if (row.code === '_tumbu_accounts') throw new BadRequestException('Control Plane tidak memakai alur persetujuan usaha.');
 
-    const updated = await this.prisma.tenant.update({
+    const updated = await this.prisma.workspace.update({
       where: { id: row.id },
       data: {
         status,
@@ -702,7 +702,7 @@ export class PlatformService {
 
   /** Pastikan plan + allowedSpecies dari pengajuan registrasi diterapkan saat approve. */
   private async applyRegistrationRequestOnApprove(workspaceId: string) {
-    const row = await this.prisma.tenant.findUnique({ where: { id: workspaceId } });
+    const row = await this.prisma.workspace.findUnique({ where: { id: workspaceId } });
     if (!row || row.code === '_tumbu_accounts') return;
     let settings: Record<string, unknown> = {};
     try { settings = JSON.parse(row.settingsJson || '{}') as Record<string, unknown>; } catch { /* ignore */ }
@@ -734,7 +734,7 @@ export class PlatformService {
       allowedSpecies: nextSpecies,
       speciesTier: tier,
     };
-    await this.prisma.tenant.update({
+    await this.prisma.workspace.update({
       where: { id: workspaceId },
       data: { settingsJson: JSON.stringify(settings) },
     });
@@ -760,7 +760,7 @@ export class PlatformService {
 
   async activateWorkspace(input: { id?: string } = {}, token?: string) {
     if (!input.id) throw new BadRequestException('ID workspace wajib diisi.');
-    const row = await this.prisma.tenant.findUnique({ where: { id: input.id } });
+    const row = await this.prisma.workspace.findUnique({ where: { id: input.id } });
     if (!row) throw new BadRequestException('Workspace tidak ditemukan.');
     const session = token ? await this.auth.requireSession(token) : null;
     if (session && !session.isPlatformAdmin) {
@@ -777,7 +777,7 @@ export class PlatformService {
         row.trialEndsAt < new Date()
       ) {
         if (row.commercialStatus !== 'EXPIRED') {
-          await this.prisma.tenant.update({
+          await this.prisma.workspace.update({
             where: { id: row.id },
             data: { commercialStatus: 'EXPIRED' },
           });
@@ -892,7 +892,7 @@ export class PlatformService {
         ? [...new Set([...prev, ...incoming])]
         : incoming;
     }
-    await this.prisma.tenant.update({
+    await this.prisma.workspace.update({
       where: { id: t.id },
       data: { settingsJson: JSON.stringify(settings) },
     });
@@ -929,7 +929,7 @@ export class PlatformService {
     const bp = BLUEPRINTS.find((b) => b.id === input.id);
     if (!bp || !isSelectableBlueprint(bp)) throw new BadRequestException('Blueprint tidak tersedia.');
     const t = await this.requireWorkspaceRow(input.workspaceId);
-    await this.prisma.tenant.update({
+    await this.prisma.workspace.update({
       where: { id: t.id },
       data: { blueprintId: bp.id, blueprint: bp.name, modulesJson: JSON.stringify(bp.modules) },
     });
@@ -945,7 +945,7 @@ export class PlatformService {
     let settings: Record<string, unknown> = {};
     try { settings = JSON.parse(t.settingsJson || '{}') as Record<string, unknown>; } catch { /* ignore */ }
     settings.demoMode = input.enabled;
-    await this.prisma.tenant.update({
+    await this.prisma.workspace.update({
       where: { id: t.id },
       data: { settingsJson: JSON.stringify(settings) },
     });
@@ -974,7 +974,7 @@ export class PlatformService {
   } = {}) {
     if (input.name !== undefined && !String(input.name).trim()) throw new BadRequestException('Nama workspace tidak boleh kosong.');
     const t = await this.requireWorkspaceRow(input.workspaceId);
-    await this.prisma.tenant.update({
+    await this.prisma.workspace.update({
       where: { id: t.id },
       data: {
         ...(input.name !== undefined ? { name: String(input.name).trim() } : {}),
@@ -1020,7 +1020,7 @@ export class PlatformService {
     if (!['OWNER', 'ADMIN', 'STAFF', 'TECHNICIAN'].includes(role)) {
       throw new BadRequestException('Role tidak valid.');
     }
-    const ws = await this.prisma.tenant.findUnique({ where: { id: input.workspaceId } });
+    const ws = await this.prisma.workspace.findUnique({ where: { id: input.workspaceId } });
     if (!ws) throw new BadRequestException('Workspace tidak ditemukan.');
     const passwordHash = hashPassword(input.password || process.env.DEMO_USER_PASSWORD || 'TumbuDemo123!');
     const email = input.email.trim().toLowerCase();
@@ -1173,7 +1173,7 @@ export class PlatformService {
     type TenantLite = { id: string; name: string; code: string };
     type UserLite = { id: string; name: string | null; email: string };
     const tenants: TenantLite[] = tenantIds.length
-      ? await this.prisma.tenant.findMany({
+      ? await this.prisma.workspace.findMany({
         where: { id: { in: tenantIds } },
         select: { id: true, name: true, code: true },
       })
