@@ -54,10 +54,15 @@ export function AkarFloatingWidget({
           body: JSON.stringify({
             action: 'chat',
             prompt,
-            systemContext: {
-              workspace: activeWorkspace?.name || 'Platform Master Admin',
-              workspaceId: activeWorkspace?.id || 'master_admin',
-              jenisUsaha: activeWorkspace?.jenisUsaha || 'distributor',
+            systemContext: activeWorkspace?.id ? {
+              workspace: activeWorkspace.name,
+              workspaceId: activeWorkspace.id,
+              jenisUsaha: activeWorkspace.jenisUsaha,
+              isControlPlane: false,
+            } : {
+              workspace: 'Platform Master Admin',
+              workspaceId: 'control_plane',
+              isControlPlane: true,
             },
             history: messages.slice(-6).map((m) => ({ role: m.sender, content: m.text })),
           }),
