@@ -155,16 +155,16 @@ export class AuthService {
   }
 
   private toSession(row: {
-    userId: string; email: string; name: string; role: string; tenantId: string;
-    isPlatformAdmin: boolean; membershipRole: string; createdAt: Date;
+    userId: string; role: string; tenantId: string | null;
+    membershipRole: string; createdAt: Date; user: { email: string; fullName: string; role: string };
   }): Session {
     return {
       userId: row.userId,
-      email: row.email,
-      name: row.name,
+      email: row.user.email,
+      name: row.user.fullName,
       role: row.role,
-      tenantId: row.tenantId,
-      isPlatformAdmin: row.isPlatformAdmin,
+      tenantId: row.tenantId || 'default',
+      isPlatformAdmin: row.user.role === 'SUPER_ADMIN',
       membershipRole: row.membershipRole,
       createdAt: row.createdAt.getTime(),
     };
@@ -194,12 +194,10 @@ export class AuthService {
       data: {
         tokenHash: fingerprint(token),
         userId: user.id,
-        email: user.email,
-        name: user.name,
         role: user.role,
         tenantId,
-        isPlatformAdmin: user.isPlatformAdmin,
         membershipRole,
+        land,
         expiresAt,
       },
     });
@@ -457,7 +455,10 @@ export class AuthService {
 
   async requireSession(token?: string): Promise<Session> {
     if (!token) throw new UnauthorizedException('Silakan masuk terlebih dahulu.');
-    const row = await this.prisma.session.findUnique({ where: { tokenHash: fingerprint(token) } });
+    const row = await this.prisma.session.findUnique({
+      where: { tokenHash: fingerprint(token) },
+      include: { user: true },
+    });
     if (!row) throw new UnauthorizedException('Sesi tidak valid atau sudah berakhir.');
     if (row.expiresAt.getTime() < Date.now()) {
       await this.prisma.session.delete({ where: { id: row.id } }).catch(() => undefined);
