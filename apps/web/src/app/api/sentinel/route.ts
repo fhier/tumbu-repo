@@ -28,6 +28,7 @@ async function generateVertexAiResponse(promptText: string, systemInstructionTex
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
+      tools: [{ googleSearch: {} }],
       systemInstruction: {
         parts: [{ text: systemInstructionText }],
       },
