@@ -17,15 +17,21 @@ COPY apps/api/package.json ./apps/api/
 # Install semua deps termasuk devDependencies (diperlukan untuk build)
 RUN npm install --legacy-peer-deps
 
-# Copy source code packages
+# Copy source code packages & tooling
 COPY packages/ ./packages/
+COPY tooling/ ./tooling/
 COPY apps/api/ ./apps/api/
 
 # Generate Prisma client
 RUN cd apps/api && npx prisma generate
 
-# Build NestJS API
-RUN cd apps/api && npm run build
+# Build packages and NestJS API
+RUN npm run build --workspace=packages/core && \
+    npm run build --workspace=packages/domain && \
+    npm run build --workspace=packages/knowledge && \
+    npm run build --workspace=packages/contracts && \
+    npm run build --workspace=packages/devkit && \
+    npm run build --workspace=apps/api
 
 # ──────────────────────────────────────────────────
 # Stage 2: Production Runtime

@@ -6,6 +6,9 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+COPY packages/core/package.json ./packages/core/
+COPY packages/domain/package.json ./packages/domain/
+COPY packages/knowledge/package.json ./packages/knowledge/
 COPY packages/contracts/package.json ./packages/contracts/
 COPY packages/devkit/package.json ./packages/devkit/
 COPY apps/web/package.json ./apps/web/
@@ -23,11 +26,17 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
 
 COPY packages/ ./packages/
+COPY tooling/ ./tooling/
 COPY apps/web/ ./apps/web/
 COPY package.json ./
 
-# Build Next.js dengan standalone output
-RUN cd apps/web && npm run build
+# Build packages dan Next.js dengan standalone output
+RUN npm run build --workspace=packages/core && \
+    npm run build --workspace=packages/domain && \
+    npm run build --workspace=packages/knowledge && \
+    npm run build --workspace=packages/contracts && \
+    npm run build --workspace=packages/devkit && \
+    cd apps/web && npm run build
 
 # ──────────────────────────────────────────────────
 # Stage 3: Production Runtime

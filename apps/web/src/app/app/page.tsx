@@ -2,8 +2,8 @@
 
 import WorkspaceSwitch from './workspace-switch';
 import { useWorkspaceRole } from './hooks/useWorkspaceRole';
-import BlueprintA from './blueprints/a/BlueprintA';
-import BlueprintB from './blueprints/b/BlueprintB';
+import BlueprintA from '../blueprints/a/BlueprintA';
+import BlueprintB from '../blueprints/b/BlueprintB';
 
 /** Unified workspace shell that renders the appropriate blueprint based on role */
 export default function AppShell() {
