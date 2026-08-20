@@ -1012,9 +1012,9 @@ export default function Page() {
       setCurrentUser(result.user || null);
       setWorkspaces(Array.isArray(result.workspaces) ? result.workspaces : []);
 
-      if (result.land === 'platform' || result.user?.isPlatformAdmin) {
+      if (result.land === 'platform' || result.user?.isPlatformAdmin || result.user?.role === 'PLATFORM_ADMIN' || result.user?.role === 'SUPER_ADMIN') {
         setView('platform');
-        showToast('Berhasil masuk Platform Admin');
+        showToast('Berhasil masuk Platform Admin Control Plane');
         return;
       }
 
@@ -1171,7 +1171,7 @@ export default function Page() {
         setCurrentUser(result.user || null);
         setWorkspaces(Array.isArray(result.workspaces) ? result.workspaces : []);
 
-        if (result.user?.isPlatformAdmin) {
+        if (result.user?.isPlatformAdmin || result.user?.role === 'PLATFORM_ADMIN' || result.user?.role === 'SUPER_ADMIN') {
           setView('platform');
           return;
         }
