@@ -1,7 +1,7 @@
 'use client';
 
-import WorkspaceSwitch from './workspace-switch';
-import { useWorkspaceRole } from './hooks/useWorkspaceRole';
+import WorkspaceSwitch from '../workspace-switch';
+import { useWorkspaceRole } from '../hooks/useWorkspaceRole';
 import BlueprintA from '../blueprints/a/BlueprintA';
 import BlueprintB from '../blueprints/b/BlueprintB';
 
