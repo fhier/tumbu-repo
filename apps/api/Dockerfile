@@ -31,7 +31,7 @@ RUN npm run build --workspace=packages/core && \
     npm run build --workspace=packages/knowledge && \
     npm run build --workspace=packages/contracts && \
     npm run build --workspace=packages/devkit && \
-    npm run build --workspace=apps/api
+    cd apps/api && npx nest build
 
 # ──────────────────────────────────────────────────
 # Stage 2: Production Runtime
@@ -69,4 +69,4 @@ COPY --from=builder /app/packages ./packages
 EXPOSE 3001
 
 # Jalankan API
-CMD ["sh", "-c", "if [ -f apps/api/dist/main.js ]; then node apps/api/dist/main.js; elif [ -f apps/api/dist/src/main.js ]; then node apps/api/dist/src/main.js; else find apps/api/dist -name main.js -exec node {} \\;; fi"]
+CMD ["node", "apps/api/dist/main.js"]

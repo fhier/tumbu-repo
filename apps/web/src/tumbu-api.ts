@@ -104,6 +104,33 @@ export const erpApi = {
   beritaAcara: (token: string) => tumbuFetch('/erp/berita-acara', token),
   createBeritaAcara: (token: string, body: object) =>
     tumbuFetch('/erp/berita-acara', token, { method: 'POST', body: JSON.stringify(body) }),
+  updateCash: (token: string, body: object) =>
+    tumbuFetch('/erp/cash', token, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteCash: (token: string, body: object) =>
+    tumbuFetch('/erp/cash/delete', token, { method: 'POST', body: JSON.stringify(body) }),
+  updateTransaction: (token: string, body: object) =>
+    tumbuFetch('/erp/transactions', token, { method: 'PATCH', body: JSON.stringify(body) }),
+  deleteTransaction: (token: string, body: object) =>
+    tumbuFetch('/erp/transactions/delete', token, { method: 'POST', body: JSON.stringify(body) }),
+  payTransaction: (token: string, body: object) =>
+    tumbuFetch('/erp/transactions/pay', token, { method: 'POST', body: JSON.stringify(body) }),
+  adjustStock: (token: string, body: object) =>
+    tumbuFetch('/erp/products/adjust-stock', token, { method: 'POST', body: JSON.stringify(body) }),
+  settings: (token: string) => tumbuFetch('/erp/settings', token),
+  updateSettings: (token: string, body: object) =>
+    tumbuFetch('/erp/settings', token, { method: 'PATCH', body: JSON.stringify(body) }),
+  closings: (token: string) => tumbuFetch('/erp/closings', token),
+  closingStatus: (token: string) => tumbuFetch('/erp/closings/status', token),
+  closePeriod: (token: string, body: object) =>
+    tumbuFetch('/erp/closings', token, { method: 'POST', body: JSON.stringify(body) }),
+  reopenPeriod: (token: string, body: object) =>
+    tumbuFetch('/erp/closings/reopen', token, { method: 'POST', body: JSON.stringify(body) }),
+  invoice: (token: string, transactionId: string) =>
+    tumbuFetch(`/erp/documents/invoice?transactionId=${transactionId}`, token),
+  nota: (token: string, transactionId: string) =>
+    tumbuFetch(`/erp/documents/nota-pembelian?transactionId=${transactionId}`, token),
+  kwitansi: (token: string, transactionId: string) =>
+    tumbuFetch(`/erp/documents/kwitansi?transactionId=${transactionId}`, token),
 };
 
 // Budidaya - matches BudidayaCycleController
@@ -136,4 +163,25 @@ export const syncApi = {
     }),
   pull: (token: string, since: number = 0) =>
     tumbuFetch(`/api/v1/sync/pull?since=${since}`, token),
+};
+
+// Budidaya Events
+export const budidayaEventApi = {
+  stocking: (token: string, body: object) => tumbuFetch('/budidaya/event/stocking', token, { method: 'POST', body: JSON.stringify(body) }),
+  feed: (token: string, body: object) => tumbuFetch('/budidaya/event/feed', token, { method: 'POST', body: JSON.stringify(body) }),
+  mortality: (token: string, body: object) => tumbuFetch('/budidaya/event/mortality', token, { method: 'POST', body: JSON.stringify(body) }),
+  sampling: (token: string, body: object) => tumbuFetch('/budidaya/event/sampling', token, { method: 'POST', body: JSON.stringify(body) }),
+  harvest: (token: string, body: object) => tumbuFetch('/budidaya/event/harvest', token, { method: 'POST', body: JSON.stringify(body) }),
+  expense: (token: string, body: object) => tumbuFetch('/budidaya/event/expense', token, { method: 'POST', body: JSON.stringify(body) }),
+  close: (token: string, body: object) => tumbuFetch('/budidaya/event/close', token, { method: 'POST', body: JSON.stringify(body) }),
+};
+
+// Budidaya Master Data
+export const budidayaMasterApi = {
+  ponds: (token: string) => tumbuFetch('/budidaya/master/ponds', token),
+  createPond: (token: string, body: object) => tumbuFetch('/budidaya/master/ponds', token, { method: 'POST', body: JSON.stringify(body) }),
+  species: (token: string) => tumbuFetch('/budidaya/master/species', token),
+  strains: (token: string) => tumbuFetch('/budidaya/master/strains', token),
+  feedTypes: (token: string) => tumbuFetch('/budidaya/master/feed-types', token),
+  mortalityCauses: (token: string) => tumbuFetch('/budidaya/master/mortality-causes', token),
 };
