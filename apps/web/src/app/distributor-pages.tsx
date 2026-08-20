@@ -99,43 +99,43 @@ export function DistributorPages({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ padding: 24, overflowY: 'auto' }}>
-        {distributorTab === 'dashboard' && (
+        {(distributorTab === 'dashboard' || distributorTab === 'overview') && (
           <DistributorDashboardPanel sales={sales} purchases={purchases} cash={cash} products={products} sizes={sizes} onNavigate={setDistributorTab} />
         )}
-        {distributorTab === 'penjualan' && (
-          <PenjualanPanel apiFetch={apiFetch} onNotify={onNotify} products={products} customers={customers} sales={sales} onRefresh={fetchData} />
+        {(distributorTab === 'penjualan' || distributorTab === 'sales') && (
+          <PenjualanPanel apiFetch={apiFetch} onNotify={onNotify} products={products} customers={customers} sales={sales} sizes={sizes} onRefresh={fetchData} />
         )}
-        {distributorTab === 'pembelian' && (
-          <PembelianPanel apiFetch={apiFetch} onNotify={onNotify} products={products} suppliers={suppliers} purchases={purchases} beritaAcara={beritaAcara} onRefresh={fetchData} />
+        {(distributorTab === 'pembelian' || distributorTab === 'purchase') && (
+          <PembelianPanel apiFetch={apiFetch} onNotify={onNotify} products={products} suppliers={suppliers} purchases={purchases} beritaAcara={beritaAcara} sizes={sizes} onRefresh={fetchData} />
         )}
-        {distributorTab === 'suratjalan' && (
+        {(distributorTab === 'suratjalan' || distributorTab === 'surat_jalan') && (
           <SuratJalanPanel apiFetch={apiFetch} onNotify={onNotify} sales={sales} sizes={sizes} suratJalan={suratJalan} onRefresh={fetchData} />
         )}
-        {distributorTab === 'beritaacara' && (
+        {(distributorTab === 'beritaacara' || distributorTab === 'berita_acara') && (
           <BeritaAcaraPanel apiFetch={apiFetch} onNotify={onNotify} suppliers={suppliers} sizes={sizes} beritaAcara={beritaAcara} onRefresh={fetchData} />
         )}
-        {distributorTab === 'pengeluaran' && (
+        {(distributorTab === 'pengeluaran' || distributorTab === 'expense') && (
           <PengeluaranPanel apiFetch={apiFetch} onNotify={onNotify} cash={cash} onRefresh={fetchData} />
         )}
-        {distributorTab === 'kas' && (
+        {(distributorTab === 'kas' || distributorTab === 'cash') && (
           <KasBankPanel cash={cash} apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
         )}
         {distributorTab === 'kwitansi' && (
           <KwitansiPanel transactions={[...sales, ...purchases]} cash={cash} beritaAcara={beritaAcara} apiFetch={apiFetch} onNotify={onNotify} />
         )}
-        {distributorTab === 'hutang' && (
+        {(distributorTab === 'hutang' || distributorTab === 'receivable' || distributorTab === 'payable' || distributorTab === 'due') && (
           <DuePanel payables={purchases.filter(p => p.status === 'DUE' || p.status === 'DP')} receivables={sales.filter(s => s.status === 'DUE' || s.status === 'DP')} apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
         )}
         {(distributorTab === 'tutupbuku' || distributorTab === 'closing') && (
           <ClosingPanel apiFetch={apiFetch} onNotify={onNotify} />
         )}
-        {distributorTab === 'keuangan' && (
+        {(distributorTab === 'keuangan' || distributorTab === 'finance') && (
           <KeuanganPanel apiFetch={apiFetch} onNotify={onNotify} />
         )}
-        {distributorTab === 'laporan' && (
+        {(distributorTab === 'laporan' || distributorTab === 'reports') && (
           <LaporanPanel apiFetch={apiFetch} onNotify={onNotify} />
         )}
-        {(distributorTab === 'pengaturan' || distributorTab === 'master' || distributorTab === 'stok' || distributorTab === 'backup') && (
+        {(distributorTab === 'pengaturan' || distributorTab === 'settings' || distributorTab === 'master' || distributorTab === 'stok' || distributorTab === 'inventory' || distributorTab === 'backup') && (
           <CompanySettings apiFetch={apiFetch} onNotify={onNotify} onRefresh={fetchData} />
         )}
       </div>
