@@ -73,8 +73,8 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
-      # API URL untuk server-side Next.js → pakai nama service Docker
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost}
+      INTERNAL_API_URL: "http://api:3001"
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api}
     ports:
       - "80:3000"
     depends_on:

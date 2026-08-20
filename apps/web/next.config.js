@@ -7,7 +7,7 @@ const nextConfig = {
   async rewrites() {
     // Di development: proxy ke localhost:3001
     // Di Docker: Next.js server-side rewrites ke service 'api' dalam network Docker
-    const apiBase = process.env.INTERNAL_API_URL || 'http://127.0.0.1:3001';
+    const apiBase = process.env.INTERNAL_API_URL || 'http://api:3001';
     return [
       {
         source: '/api/:path*',
