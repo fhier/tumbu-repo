@@ -44,6 +44,8 @@ model User {
   fullName         String
   phoneNumber      String?
   role             UserRole          @default(OPERATOR)
+  isPlatformAdmin  Boolean           @default(false)
+  emailVerifiedAt  DateTime?
   isActive         Boolean           @default(true)
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
