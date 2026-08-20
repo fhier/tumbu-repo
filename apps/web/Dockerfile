@@ -48,7 +48,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Salin standalone output (hanya file yang dibutuhkan runtime)
+# Salin standalone output dan node_modules yang dibutuhkan
+COPY --from=deps /app/node_modules ./node_modules
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=builder /app/apps/web/public ./apps/web/public
