@@ -5,9 +5,10 @@ import fs from 'fs';
 export const dynamic = 'force-dynamic';
 
 async function generateVertexAiResponse(promptText: string, systemInstructionText: string) {
-  const gcpKeyPath = '/home/builder/.hermes/gcp-key.json';
-  if (!fs.existsSync(gcpKeyPath)) {
-    throw new Error('GCP Key file not found');
+  const possiblePaths = ['/app/gcp-key.json', '/home/builder/.hermes/gcp-key.json', './gcp-key.json'];
+  const gcpKeyPath = possiblePaths.find((p) => fs.existsSync(p));
+  if (!gcpKeyPath) {
+    throw new Error('GCP Key file not found in container or host');
   }
 
   const keyData = JSON.parse(fs.readFileSync(gcpKeyPath, 'utf8'));
