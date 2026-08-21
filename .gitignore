@@ -21,3 +21,4 @@ firebase.json
 # AI tools
 .aider*
 .blackboxcli/
+gcp-key.json
