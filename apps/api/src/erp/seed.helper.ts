@@ -67,9 +67,9 @@ async function upsertUser(
 
 async function ensureMembership(prisma: PrismaClient, userId: string, tenantId: string, role: string) {
   await prisma.workspaceMember.upsert({
-    where: { userId_tenantId: { userId, tenantId } },
+    where: { workspaceId_userId: { userId, workspaceId: tenantId } },
     update: { role },
-    create: { userId, tenantId, role },
+    create: { userId, workspaceId: tenantId, role },
   });
 }
 

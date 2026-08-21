@@ -1005,6 +1005,7 @@ export default function Page() {
       if (!result?.token) throw new Error('Login berhasil tetapi token tidak diterima.');
 
       localStorage.setItem('tumbu-token', result.token);
+      localStorage.setItem('tumbu_token', result.token);
       if (result.user) localStorage.setItem('tumbu-user', JSON.stringify(result.user));
       if (Array.isArray(result.workspaces)) localStorage.setItem('tumbu-workspaces', JSON.stringify(result.workspaces));
 
@@ -1067,6 +1068,7 @@ export default function Page() {
       if (!result?.token) throw new Error('Registrasi berhasil tetapi token tidak diterima.');
 
       localStorage.setItem('tumbu-token', result.token);
+      localStorage.setItem('tumbu_token', result.token);
       if (result.user) localStorage.setItem('tumbu-user', JSON.stringify(result.user));
       if (Array.isArray(result.workspaces)) localStorage.setItem('tumbu-workspaces', JSON.stringify(result.workspaces));
 
@@ -1404,7 +1406,7 @@ export default function Page() {
     }
   };
 
-  const activeModules = view === 'platform' ? PLATFORM_MODULES : getModulesForBusiness(activeWorkspace?.jenisUsaha);
+  const activeModules = (view === 'platform' ? (Array.isArray(PLATFORM_MODULES) ? PLATFORM_MODULES : []) : (Array.isArray(getModulesForBusiness(activeWorkspace?.jenisUsaha)) ? getModulesForBusiness(activeWorkspace?.jenisUsaha) : []));
 
   return (
     <div
@@ -3027,8 +3029,8 @@ export default function Page() {
 
             {/* Navigation Modules Menu Grouped by Function/Category */}
             <div className="flex-1 overflow-y-auto px-2 py-2 space-y-3">
-              {Array.from(new Set(activeModules.map(m => m.category || 'MENU'))).map((cat) => {
-                const catItems = activeModules.filter(m => (m.category || 'MENU') === cat);
+              {Array.from(new Set((activeModules || []).map(m => m?.category || "MENU"))).map((cat) => {
+                const catItems = (activeModules || []).filter(m => (m?.category || "MENU") === cat);
                 return (
                   <div key={cat} className="space-y-1">
                     {!sidebarCollapsed && (
@@ -5021,7 +5023,7 @@ export default function Page() {
                           : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text)]'
                       }`}
                     >
-                      Daftar Petani ({masterPetani.length})
+                      Daftar Petani ({masterPetani?.length ?? 0})
                     </button>
                     <button
                       onClick={() => setMasterTab('komoditas')}
@@ -5031,7 +5033,7 @@ export default function Page() {
                           : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text)]'
                       }`}
                     >
-                      Daftar Komoditas & Pakan ({masterKomoditas.length})
+                      Daftar Komoditas & Pakan ({masterKomoditas?.length ?? 0})
                     </button>
                   </div>
 
@@ -5111,7 +5113,7 @@ export default function Page() {
                       )}
 
                       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        {masterPetani.map((petani) => (
+                        {(masterPetani ?? []).map((petani) => (
                           <div key={petani.id} className="clay rounded-[18px] p-4 border border-[var(--border)] space-y-3">
                             <div className="flex justify-between items-start">
                               <div className="w-10 h-10 rounded-full bg-[#0EA5E9]/10 text-[#0EA5E9] flex items-center justify-center font-bold text-[14px]">
@@ -5220,7 +5222,7 @@ export default function Page() {
                       )}
 
                       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {masterKomoditas.map((k) => (
+                        {(masterKomoditas ?? []).map((k) => (
                           <div key={k.id} className="clay rounded-[18px] p-4 border border-[var(--border)] flex justify-between items-center">
                             <div>
                               <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wider ${k.tipe === 'Pakan' ? 'bg-amber-500/10 text-amber-500' : 'bg-blue-500/10 text-blue-500'}`}>

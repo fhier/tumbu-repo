@@ -50,7 +50,7 @@ export class PaymentService {
     }
     if (!session.isPlatformAdmin) {
       const mem = await this.prisma.workspaceMember.findUnique({
-        where: { userId_tenantId: { userId: session.userId, tenantId: inv.tenantId } },
+        where: { workspaceId_userId: { userId: session.userId, workspaceId: inv.tenantId } },
       });
       if (!mem || !['OWNER', 'ADMIN'].includes(mem.role)) {
         throw new ForbiddenException('Hanya Owner/Admin workspace yang dapat membuat pembayaran.');

@@ -69,9 +69,7 @@ export class ApiWallGuard implements CanActivate {
     const tenant = await this.prisma.workspace.findUnique({
       where: { id: session.tenantId },
       select: {
-        modulesJson: true, blueprintId: true, code: true, status: true,
-        planId: true, trialEndsAt: true, commercialStatus: true, settingsJson: true,
-        plan: { select: { modulesJson: true, name: true } },
+        id: true, slug: true, name: true, businessType: true, status: true,
       },
     });
     if (!tenant) {
@@ -79,7 +77,7 @@ export class ApiWallGuard implements CanActivate {
     }
 
     // Control plane tenant has no business modules — deny domain APIs
-    if (tenant.code === '_tumbu_accounts') {
+    if (tenant.slug === '_tumbu_accounts') {
       throw new ForbiddenException(
         'Modul bisnis tidak tersedia di Control Plane. Aktifkan workspace terlebih dahulu.',
       );
@@ -102,31 +100,20 @@ export class ApiWallGuard implements CanActivate {
             : `Workspace belum dapat dipakai (status: ${st || 'unknown'}).`,
         );
       }
-      // Trial & Plan — trial habis tanpa langganan → EXPIRED + block ERP (kecuali demo mode)
-      if (
-        !isDemoMode(tenant.settingsJson) &&
-        tenant.commercialStatus !== 'SUBSCRIBED'
-        && tenant.trialEndsAt
-        && tenant.trialEndsAt < new Date()
-      ) {
-        if (tenant.commercialStatus !== 'EXPIRED') {
-          void this.prisma.workspace.update({
-            where: { id: session.tenantId },
-            data: { commercialStatus: 'EXPIRED' },
-          }).catch(() => undefined);
-          void this.reminders.notifySubscriptionExpired(session.tenantId).catch(() => undefined);
-        }
-        throw new ForbiddenException(
-          'Masa trial telah berakhir. Selesaikan tagihan atau hubungi Platform Founder.',
-        );
-      }
     }
 
-    let enabled = parseTenantModules(tenant.modulesJson, tenant.blueprintId);
-    // Demo mode: bypass plan module intersection — allow all blueprint modules
-    if (!isDemoMode(tenant.settingsJson) && tenant.plan?.modulesJson) {
-      enabled = intersectModules(enabled, parsePlanModules(tenant.plan.modulesJson));
+    let enabled: string[] = [];
+    if (tenant.businessType === 'CULTIVATOR') {
+      enabled = ['master', 'cycles', 'events', 'dashboard', 'analysis', 'settings', 'mod-feed', 'mod-water', 'mod-mortality', 'mod-harvest'];
+    } else if (tenant.businessType === 'DISTRIBUTOR') {
+      enabled = ['purchase', 'sales', 'inventory', 'cash', 'expense', 'finance', 'settings', 'mod-inventory', 'mod-do', 'dashboard'];
+    } else if (tenant.businessType === 'HYBRID') {
+      enabled = [
+        'master', 'cycles', 'events', 'dashboard', 'analysis', 'settings', 'mod-feed', 'mod-water', 'mod-mortality', 'mod-harvest',
+        'purchase', 'sales', 'inventory', 'cash', 'expense', 'finance', 'mod-inventory', 'mod-do'
+      ];
     }
+
     const needed = resolveRequiredModules(rule, {
       method: String(req.method || 'GET').toUpperCase(),
       query: req.query || {},

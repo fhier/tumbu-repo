@@ -5,8 +5,8 @@ export async function fetchApi<T>(
   options: RequestInit = {}
 ): Promise<{ data?: T; error?: string }> {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('tumbu_token') : null;
-    const activeWorkspace = typeof window !== 'undefined' ? localStorage.getItem('tumbu_active_workspace') : null;
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('tumbu-token') || localStorage.getItem('tumbu_token')) : null;
+    const activeWorkspace = typeof window !== 'undefined' ? (localStorage.getItem('tumbu-active-workspace') || localStorage.getItem('tumbu_active_workspace')) : null;
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',

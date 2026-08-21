@@ -85,8 +85,8 @@ export class PlatformService {
       select: { isPlatformAdmin: true },
     });
     if (user?.isPlatformAdmin) return;
-    const membership = await this.prisma.membership.findUnique({
-      where: { userId_tenantId: { userId, tenantId: workspaceId } },
+    const membership = await this.prisma.workspaceMember.findUnique({
+      where: { workspaceId_userId: { userId, workspaceId } },
       select: { id: true },
     });
     if (!membership) throw new ForbiddenException('Anda tidak memiliki akses ke workspace ini.');
@@ -136,13 +136,13 @@ export class PlatformService {
     }
     const plan = await this.resolvePlan(input.planId);
     const owned = await this.countOwnerWorkspaces(session.userId);
-    const existing = await this.prisma.membership.findMany({
+    const existing = await this.prisma.workspaceMember.findMany({
       where: { userId: session.userId, role: 'OWNER' },
-      include: { tenant: { include: { plan: true } } },
+      include: { workspace: true },
     });
     const maxQuota = Math.max(
       plan.workspaceQuota,
-      ...existing.map((m) => m.tenant.plan?.workspaceQuota || 1),
+      ...existing.map((m) => resolvePlanLimits(m.workspace.tier).workspaceQuota),
     );
     if (owned >= maxQuota) {
       throw new BadRequestException(
@@ -162,10 +162,10 @@ export class PlatformService {
       speciesTier: input.speciesTier,
     });
 
-    await this.prisma.membership.upsert({
-      where: { userId_tenantId: { userId: session.userId, tenantId: created.id } },
+    await this.prisma.workspaceMember.upsert({
+      where: { workspaceId_userId: { userId: session.userId, workspaceId: created.id } },
       update: { role: 'OWNER' },
-      create: { userId: session.userId, tenantId: created.id, role: 'OWNER' },
+      create: { userId: session.userId, workspaceId: created.id, role: 'OWNER' },
     });
     await this.bootstrapNewWorkspace(created.id, created.blueprintId);
     await this.audit.log({
@@ -176,7 +176,7 @@ export class PlatformService {
       entityId: created.id,
       meta: { blueprintId: created.blueprintId, status: 'PENDING', planCode: plan.code },
     });
-    const memberCount = await this.prisma.membership.count({ where: { tenantId: created.id } });
+    const memberCount = await this.prisma.workspaceMember.count({ where: { workspaceId: created.id } });
     return {
       ...created,
       memberCount,
@@ -349,11 +349,11 @@ export class PlatformService {
 
   /** Count workspaces owned by user (OWNER) excluding accounts — for quota. */
   private async countOwnerWorkspaces(userId: string) {
-    return this.prisma.membership.count({
+    return this.prisma.workspaceMember.count({
       where: {
         userId,
         role: 'OWNER',
-        tenant: { code: { not: '_tumbu_accounts' }, status: { not: 'REJECTED' } },
+        workspace: { slug: { not: '_tumbu_accounts' } },
       },
     });
   }
@@ -489,7 +489,7 @@ export class PlatformService {
       meta: { name: created.name, blueprintId: bp.id, status, planCode: plan.code },
     });
 
-    const memberCount = await this.prisma.membership.count({ where: { tenantId: created.id } });
+    const memberCount = await this.prisma.workspaceMember.count({ where: { workspaceId: created.id } });
 
     return {
       id: created.id, code: created.code, name: created.name, blueprint: bp.name,
@@ -769,25 +769,8 @@ export class PlatformService {
           `Workspace belum dapat dimasuki (status: ${labelWorkspaceStatus(row.status)}).`,
         );
       }
-      // Trial & Plan: trial habis tanpa langganan → blokir (kecuali demo mode aktif)
-      if (
-        !isDemoMode(row.settingsJson) &&
-        row.commercialStatus !== 'SUBSCRIBED' &&
-        row.trialEndsAt &&
-        row.trialEndsAt < new Date()
-      ) {
-        if (row.commercialStatus !== 'EXPIRED') {
-          await this.prisma.workspace.update({
-            where: { id: row.id },
-            data: { commercialStatus: 'EXPIRED' },
-          });
-        }
-        throw new BadRequestException(
-          'Masa trial telah berakhir. Hubungi Platform Founder atau selesaikan tagihan untuk melanjutkan.',
-        );
-      }
-      const mem = await this.prisma.membership.findUnique({
-        where: { userId_tenantId: { userId: session.userId, tenantId: row.id } },
+      const mem = await this.prisma.workspaceMember.findUnique({
+        where: { workspaceId_userId: { userId: session.userId, workspaceId: row.id } },
       });
       if (!mem) throw new BadRequestException('Anda tidak memiliki akses ke workspace ini.');
       await this.auth.switchTenant(token, row.id, mem.role);
@@ -989,24 +972,24 @@ export class PlatformService {
   }
 
   async listMembers() {
-    const rows = await this.prisma.membership.findMany({
+    const rows = await this.prisma.workspaceMember.findMany({
       include: {
-        user: { select: { id: true, email: true, name: true, isPlatformAdmin: true } },
-        tenant: { select: { id: true, name: true, code: true, blueprintId: true } },
+        user: { select: { id: true, email: true, fullName: true, isPlatformAdmin: true } },
+        workspace: { select: { id: true, name: true, slug: true, businessType: true } },
       },
-      orderBy: [{ tenantId: 'asc' }, { createdAt: 'asc' }],
+      orderBy: [{ workspaceId: 'asc' }, { joinedAt: 'asc' }],
     });
     return rows.map((m) => ({
       id: m.id,
       role: m.role,
       userId: m.userId,
       email: m.user.email,
-      name: m.user.name,
+      name: m.user.fullName,
       isPlatformAdmin: m.user.isPlatformAdmin,
-      workspaceId: m.tenant.id,
-      workspaceName: m.tenant.name,
-      workspaceCode: m.tenant.code,
-      blueprintId: m.tenant.blueprintId,
+      workspaceId: m.workspace.id,
+      workspaceName: m.workspace.name,
+      workspaceCode: m.workspace.slug,
+      blueprintId: m.workspace.businessType,
     }));
   }
 
@@ -1016,10 +999,8 @@ export class PlatformService {
     if (!input.email?.trim() || !input.name?.trim() || !input.workspaceId) {
       throw new BadRequestException('Email, nama, dan workspace wajib.');
     }
-    const role = (input.role || 'STAFF').toUpperCase();
-    if (!['OWNER', 'ADMIN', 'STAFF', 'TECHNICIAN'].includes(role)) {
-      throw new BadRequestException('Role tidak valid.');
-    }
+    const roleInput = (input.role || 'STAFF').toUpperCase();
+    const resolvedRole = roleInput === 'OWNER' ? 'OWNER' : 'OPERATOR';
     const ws = await this.prisma.workspace.findUnique({ where: { id: input.workspaceId } });
     if (!ws) throw new BadRequestException('Workspace tidak ditemukan.');
     const passwordHash = hashPassword(input.password || process.env.DEMO_USER_PASSWORD || 'TumbuDemo123!');
@@ -1027,51 +1008,50 @@ export class PlatformService {
     let user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
       user = await this.prisma.user.create({
-        data: { email, name: input.name.trim(), role, tenantId: ws.id, passwordHash },
+        data: { email, fullName: input.name.trim(), role: resolvedRole, passwordHash },
       });
     } else {
       // Jangan overwrite password akun yang sudah ada (undang ke workspace lain).
       await this.prisma.user.update({
         where: { id: user.id },
-        data: { name: input.name.trim() },
+        data: { fullName: input.name.trim() },
       });
     }
-    await this.prisma.membership.upsert({
-      where: { userId_tenantId: { userId: user.id, tenantId: ws.id } },
-      update: { role },
-      create: { userId: user.id, tenantId: ws.id, role },
+    await this.prisma.workspaceMember.upsert({
+      where: { workspaceId_userId: { userId: user.id, workspaceId: ws.id } },
+      update: { role: resolvedRole },
+      create: { userId: user.id, workspaceId: ws.id, role: resolvedRole },
     });
     await this.audit.log({
       action: 'member.create',
       tenantId: ws.id,
       entity: 'membership',
       entityId: user.id,
-      meta: { email, role },
+      meta: { email, role: resolvedRole },
     });
     return this.listMembers();
   }
 
   async updateMember(input: { id?: string; role?: string; active?: boolean } = {}) {
     if (!input.id) throw new BadRequestException('ID membership wajib.');
-    const mem = await this.prisma.membership.findUnique({ where: { id: input.id } });
+    const mem = await this.prisma.workspaceMember.findUnique({ where: { id: input.id } });
     if (!mem) throw new BadRequestException('Membership tidak ditemukan.');
     if (input.role) {
-      const role = input.role.toUpperCase();
-      if (!['OWNER', 'ADMIN', 'STAFF', 'TECHNICIAN'].includes(role)) throw new BadRequestException('Role tidak valid.');
-      await this.prisma.membership.update({ where: { id: mem.id }, data: { role } });
+      const resolvedRole = input.role.toUpperCase() === 'OWNER' ? 'OWNER' : 'OPERATOR';
+      await this.prisma.workspaceMember.update({ where: { id: mem.id }, data: { role: resolvedRole } });
       await this.audit.log({
         action: 'member.role_change',
-        tenantId: mem.tenantId,
+        tenantId: mem.workspaceId,
         entity: 'membership',
         entityId: mem.id,
-        meta: { role },
+        meta: { role: resolvedRole },
       });
     }
     if (input.active === false) {
-      await this.prisma.membership.delete({ where: { id: mem.id } });
+      await this.prisma.workspaceMember.delete({ where: { id: mem.id } });
       await this.audit.log({
         action: 'member.remove',
-        tenantId: mem.tenantId,
+        tenantId: mem.workspaceId,
         entity: 'membership',
         entityId: mem.id,
       });
@@ -1080,7 +1060,7 @@ export class PlatformService {
   }
 
   async listLeads() {
-    const rows = await this.prisma.interestLead.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
+    const rows = (this.prisma as any).interestLead ? await (this.prisma as any).interestLead.findMany({ orderBy: { createdAt: 'desc' }, take: 200 }) : [];
     return rows.map((r) => ({
       id: r.id, name: r.name, businessName: r.businessName, phone: r.phone, email: r.email,
       notes: r.notes, status: r.status,

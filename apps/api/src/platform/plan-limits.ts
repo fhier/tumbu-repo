@@ -61,9 +61,9 @@ const ENTERPRISE_LIMITS: PlanFeatureLimits = {
 /** Normalize legacy catalog codes → commercial tier. */
 export function normalizePlanCode(code: string | null | undefined): string {
   const c = String(code || 'starter').toLowerCase().trim();
-  if (c === 'growth') return 'pro';
-  if (c === 'business') return 'enterprise';
-  return c || 'starter';
+  if (c === 'growth' || c === 'pro_grower' || c.includes('pro')) return 'pro';
+  if (c === 'business' || c === 'enterprise_hub' || c.includes('enterprise')) return 'enterprise';
+  return 'starter';
 }
 
 export function resolvePlanLimits(code: string | null | undefined): PlanFeatureLimits {

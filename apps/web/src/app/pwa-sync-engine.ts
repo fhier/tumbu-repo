@@ -126,7 +126,7 @@ export async function triggerMasterDataPull(apiBaseUrl?: string): Promise<void> 
   if (typeof window === 'undefined' || !navigator.onLine) return;
   const baseUrl = apiBaseUrl || resolveApiBase();
   try {
-    const token = localStorage.getItem('tumbu_token');
+    const token = localStorage.getItem('tumbu-token') || localStorage.getItem('tumbu_token');
     const res = await fetch(`${baseUrl}/v1/sync/pull?tenantId=current&since=0`, {
       method: 'GET',
       headers: {
@@ -154,7 +154,7 @@ export async function triggerOutboxSync(apiBaseUrl?: string): Promise<{ syncedCo
   try {
     const pendingItems = await getPendingOutboxItems();
     if (!pendingItems.length) return { syncedCount: 0, remainingCount: 0 };
-    const token = typeof window !== 'undefined' ? localStorage.getItem('tumbu_token') : null;
+    const token = typeof window !== 'undefined' ? (localStorage.getItem('tumbu-token') || localStorage.getItem('tumbu_token')) : null;
     const res = await fetch(`${baseUrl}/v1/sync/push`, {
       method: 'POST',
       headers: {

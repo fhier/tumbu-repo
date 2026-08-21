@@ -28,7 +28,7 @@ export async function tumbuFetch(path: string, token?: string, init: RequestInit
   const res = await fetch(`${API_URL}${path}`, { ...init, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    const message = typeof err?.message === 'string' ? err.message : 'API Error';
+    const message = Array.isArray(err?.message) ? err.message.join(", ") : (typeof err?.message === "string" ? err.message : (err?.error || "API Error"));
     throw new Error(message);
   }
   return res.json();
