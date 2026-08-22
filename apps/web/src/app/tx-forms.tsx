@@ -152,7 +152,7 @@ function ItemRows({
     return !sl || !sizeLabels.includes(sl);
   });
   const speciesListId = 'tx-fish-species';
-  const speciesOpts = filterSpeciesLabelOptions([...FISH_SPECIES_OPTIONS], allowedSpecies);
+  const speciesOpts = filterSpeciesLabelOptions(Array.from(FISH_SPECIES_OPTIONS), allowedSpecies);
 
   return (
     <>

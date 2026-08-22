@@ -225,25 +225,60 @@ export class AuthService {
     };
   }
 
-  async register(input: { name?: string; email?: string; password?: string } = {}) {
+  async register(input: { 
+    name?: string; email?: string; password?: string; phoneNumber?: string; address?: string; 
+    workspaceName?: string; businessType?: 'CULTIVATOR' | 'DISTRIBUTOR' 
+  } = {}) {
     const name = String(input.name || '').trim();
     const email = String(input.email || '').trim().toLowerCase();
     const password = String(input.password || '');
+    const phoneNumber = String(input.phoneNumber || '').trim();
+    const address = String(input.address || '').trim();
+    const workspaceName = String(input.workspaceName || '').trim();
+    const businessType = input.businessType === 'DISTRIBUTOR' ? 'DISTRIBUTOR' : 'CULTIVATOR';
+
     if (!name || name.length < 2) throw new BadRequestException('Nama lengkap wajib diisi.');
     if (!email || !email.includes('@')) throw new BadRequestException('Email tidak valid.');
     if (password.length < 8) throw new BadRequestException('Kata sandi minimal 8 karakter.');
+    if (!phoneNumber) throw new BadRequestException('Nomor handphone wajib diisi.');
+    if (!address) throw new BadRequestException('Alamat wajib diisi.');
+    if (!workspaceName) throw new BadRequestException('Nama usaha/workspace wajib diisi.');
+    
     if (await this.prisma.user.findUnique({ where: { email } })) {
       throw new BadRequestException('Email sudah terdaftar. Silakan masuk.');
     }
-    const accounts = await this.ensureAccountsTenant();
-    const user = await this.prisma.user.create({
-      data: {
-        email,
-        fullName: name,
-        role: 'OWNER',
-        passwordHash: hashPassword(password),
-        isActive: true,
-      },
+
+    // Atomically create User and their initial Workspace
+    const user = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.user.create({
+        data: {
+          email,
+          fullName: name,
+          phoneNumber,
+          role: 'OWNER',
+          passwordHash: hashPassword(password),
+          isActive: true,
+        },
+      });
+
+      const w = await tx.workspace.create({
+        data: {
+          name: workspaceName,
+          slug: workspaceName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          businessType: businessType,
+          status: 'ACTIVE',
+        },
+      });
+
+      await tx.workspaceMember.create({
+        data: {
+          workspaceId: w.id,
+          userId: u.id,
+          role: 'OWNER',
+        },
+      });
+
+      return u;
     });
     const verification = await this.issueEmailVerification({ id: user.id, email: user.email, name: user.fullName });
     void this.email.sendSafe({
@@ -382,6 +417,9 @@ export class AuthService {
     });
     if (!user || !verifyPassword(input.password, user.passwordHash)) {
       throw new UnauthorizedException('Email atau kata sandi tidak sesuai.');
+    }
+    if (!user.emailVerifiedAt) {
+      throw new UnauthorizedException('Akun belum diaktivasi. Silakan periksa email Anda.');
     }
 
     const isPlatformAdmin = user.role === 'SUPER_ADMIN';

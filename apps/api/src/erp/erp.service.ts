@@ -264,38 +264,66 @@ export class ErpService {
     return Math.max(0, this.num(t.total) - this.num(t.paidAmount));
   }
 
-  private docCss() {
-    return `body{font-family:system-ui,-apple-system,sans-serif;color:#1F2937;padding:24px 18px;margin:0;font-size:12px}
-.invoice-container{width:100%;max-width:100%;box-sizing:border-box;margin:0;padding:0}
-.navy{color:#0D1B3D}.muted{color:#6B7280}
-.bar{background:#0D1B3D;color:#fff;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-radius:4px;margin-top:8px}
-.bar small{color:#E5E7EB;font-size:12px}
-.sub{font-size:11px;color:#6B7280;margin:6px 0 10px}
-.head{display:grid;grid-template-columns:1.2fr 1fr;gap:20px;margin:20px 0 16px;align-items:start}
-.head h1{margin:0;font-size:19px;font-weight:800;color:#0D1B3D}
-.head .subjudul{font-size:11.5px;color:#64748B;font-style:italic;margin-top:4px}
-.ref{border:1px solid #E5E7EB;border-radius:4px;overflow:hidden}
-.ref div{display:grid;grid-template-columns:100px 1fr;border-bottom:1px solid #E5E7EB;padding:6px 10px;font-size:12px}
-.ref div:last-child{border-bottom:0}.ref span{color:#9CA3AF;font-size:10px;font-weight:700;text-transform:uppercase}
-.ref b{text-align:right;color:#0D1B3D}
-.info{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid #E5E7EB;background:#FAFBFC;margin-bottom:14px}
-.info > div{padding:8px 10px;border-right:1px solid #E5E7EB;font-size:11px}
-.info > div:nth-child(4n){border-right:0}.info label{display:block;color:#9CA3AF;font-size:9px;text-transform:uppercase;margin-bottom:2px}
-.info b{font-size:11.5px;color:#111827}
-.sec{background:#F5F6F8;color:#0D1B3D;font-weight:700;padding:8px 10px;border-bottom:2px solid #16A34A;margin:14px 0 0;font-size:13px}
-table{width:100%;border-collapse:collapse;margin-top:0}th,td{border:1px solid #E5E7EB;padding:6px 8px;font-size:11px}
-th{background:#2A3F5F;color:#fff;font-size:10.5px;text-transform:uppercase}
-.tot td{background:#F5F6F8;font-weight:700}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px;align-items:start}
-.badge{display:inline-block;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700}
-.badge-ok{background:#ECFDF5;color:#16A34A}.badge-due{background:#FEF2F2;color:#E63946}.badge-dp{background:#FFFBEB;color:#B45309}
-.sisa-box{margin-top:12px}.sisa-box .lbl{font-size:11px;color:#6B7280}.sisa-box .val{font-size:14px;font-weight:700;margin-bottom:6px}
-.sign{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-top:28px;text-align:center;font-size:11px}
-.sign .line{margin-top:48px;border-top:1px solid #CBD5E1;padding-top:6px}
-.foot{margin-top:18px;font-size:10px;color:#9CA3AF;text-align:center;border-top:1px solid #E5E7EB;padding-top:8px}
-.amount{font-size:22px;font-weight:800;color:#0D1B3D;margin:12px 0}
-${printLetterheadCss()}
-@media print{button,.noprint{display:none!important}}`;
+  private buildInvoiceHtml(opts: {
+    tenant: { name: string; address: string | null; phone: string | null; settingsJson?: string | null };
+    invoice: { number: string; date: string; partner: string; items: any[]; total: number; paid: number; status: string };
+  }) {
+    const s = this.parseSettings(opts.tenant.settingsJson);
+    const body = `
+      <div class="head">
+        <h1>INVOICE</h1>
+        <div>${this.e(opts.invoice.number)}</div>
+        <div>${this.e(opts.invoice.date)}</div>
+      </div>
+      <p>Mitra: ${this.e(opts.invoice.partner)}</p>
+      <table>
+        <thead><tr><th>Produk</th><th>Qty/Harga</th><th>Total</th></tr></thead>
+        <tbody>
+          ${opts.invoice.items.map(i => `
+            <tr>
+              <td>${this.e(i.productName)}</td>
+              <td>${i.quantity} x ${i.price}</td>
+              <td style="text-align:right">${i.nominal}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="tot" style="text-align:right">
+        <div>Subtotal: ${opts.invoice.total}</div>
+        <div>Status: ${this.e(opts.invoice.status)}</div>
+      </div>
+    `;
+    return `<!DOCTYPE html><html><head><style>${this.thermalCss()}</style></head><body>
+      <div class="thermal-container">
+        <div class="head">
+          <b>${this.e(opts.tenant.name)}</b><br/>
+          <small>${this.e(opts.tenant.address || '')}</small><br/>
+          <small>${this.e(opts.tenant.phone || '')}</small>
+        </div>
+        ${body}
+        <div class="footer">Terima kasih atas kepercayaan Anda.</div>
+      </div></body></html>`;
+  }
+
+  private buildSuratJalanHtml(opts: {
+    tenant: { name: string; address: string | null; phone: string | null; settingsJson?: string | null };
+    sj: { number: string; destination: string; items: any[] };
+  }) {
+    const body = `
+      <div class="head"><h1>SURAT JALAN</h1></div>
+      <p>Tujuan: ${this.e(opts.sj.destination)}</p>
+      <table>
+        <thead><tr><th>Item</th><th>Qty</th><th>Ket</th></tr></thead>
+        <tbody>
+          ${opts.sj.items.map(i => `<tr><td>${this.e(i.productName)}</td><td>${i.quantity}</td><td>${i.binNote || '-'}</td></tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+    return `<!DOCTYPE html><html><head><style>${this.thermalCss()}</style></head><body>
+      <div class="thermal-container">
+        <div class="head"><b>${this.e(opts.tenant.name)}</b></div>
+        ${body}
+        <div class="footer">Harap periksa barang sebelum diterima.</div>
+      </div></body></html>`;
   }
 
   private buildOfficialDoc(opts: {

@@ -312,9 +312,6 @@ function OverviewPage({ apiFetch, onNavigate, pendingWorkspaceCount = 0 }: {
 
   return (
     <div className="space-y-6">
-      <div className="p-4 mb-4 bg-red-500 text-white rounded">
-        <h1 className="text-4xl font-extrabold tracking-tight">GUE DISINI</h1>
-      </div>
       <p className="text-xs text-slate-400 font-semibold leading-relaxed max-w-3xl">
         Pusat kendali ekosistem TUMBU. Monitor skala pertumbuhan, tren blueprint, dan kesehatan finansial platform secara global.
       </p>
