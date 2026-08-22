@@ -1,4 +1,4 @@
-import { timingSafeEqual } from 'crypto';
+import { timingSafeEqual, createHmac } from 'crypto';
 import type {
   CreatePaymentInput,
   CreatePaymentResult,
@@ -93,14 +93,26 @@ export class XenditPaymentAdapter implements PaymentProvider {
 
   verifyWebhook(
     headers: Record<string, string | string[] | undefined>,
-    _rawBody: string,
+    rawBody: string,
   ): WebhookVerification {
     const expected = this.callbackToken();
     if (!expected) {
       return { valid: false, reason: 'XENDIT_CALLBACK_TOKEN belum dikonfigurasi' };
     }
+
+    // 1. Modern HMAC-SHA256 Verification (Xendit Webhook Signature)
+    const hmacHeader = headerVal(headers, 'xendit-webhook-signature') || headerVal(headers, 'x-webhook-signature') || headerVal(headers, 'webhook-signature');
+    if (hmacHeader) {
+      const expectedHmac = createHmac('sha256', expected).update(rawBody, 'utf8').digest('hex');
+      if (timingSafeStringEqual(hmacHeader, expectedHmac)) {
+        return { valid: true };
+      }
+      return { valid: false, reason: 'HMAC webhook signature tidak valid' };
+    }
+
+    // 2. Legacy Fallback (x-callback-token)
     const got = headerVal(headers, 'x-callback-token');
-    if (!got) return { valid: false, reason: 'Header x-callback-token wajib' };
+    if (!got) return { valid: false, reason: 'Header webhook signature / x-callback-token wajib' };
     if (!timingSafeStringEqual(got, expected)) return { valid: false, reason: 'x-callback-token tidak valid' };
     return { valid: true };
   }

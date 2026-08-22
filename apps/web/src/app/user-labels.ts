@@ -64,6 +64,6 @@ export const MODULE_PAGE_LABELS: Record<string, string> = {
 };
 
 export function labelModulePages(pages: string[]): string {
-  if (!pages.length) return '—';
+  if (!pages || !pages.length) return '—';
   return pages.map((p) => MODULE_PAGE_LABELS[p] || p.replace(/_/g, ' ')).join(', ');
 }

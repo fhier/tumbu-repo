@@ -1657,11 +1657,11 @@ function ModulesPage({ apiFetch, onNotify }: { apiFetch: <T>(path: string, init?
   };
 
   const rows = Array.isArray(data) ? data : (Array.isArray((data as any)?.items) ? (data as any).items : (Array.isArray((data as any)?.data) ? (data as any).data : []));
-  const filtered = useMemo(() => rows.filter((m: any) => {
-    if (statusFilter === 'on' && !m.enabled) return false;
-    if (statusFilter === 'off' && m.enabled) return false;
+  const filtered = useMemo(() => (rows || []).filter((m: any) => {
+    if (statusFilter === 'on' && !m?.enabled) return false;
+    if (statusFilter === 'off' && m?.enabled) return false;
     if (q.trim()) {
-      const hay = `${m.name} ${m.layerLabel} ${((m.pages || []) as string[]).join(' ')}`.toLowerCase();
+      const hay = `${m?.name || ''} ${m?.layerLabel || ''} ${((m?.pages || []) as string[]).join(' ')}`.toLowerCase();
       if (!hay.includes(q.trim().toLowerCase())) return false;
     }
     return true;
@@ -1677,9 +1677,9 @@ function ModulesPage({ apiFetch, onNotify }: { apiFetch: <T>(path: string, init?
       onRefresh={reload}
       listTitle="Daftar Modul"
       summary={[
-        { label: 'Total', value: String(rows.length), tone: 'navy' },
+        { label: 'Total', value: String((rows || []).length), tone: 'navy' },
         { label: 'Aktif', value: String((rows || []).filter((m: any) => Boolean(m?.enabled)).length), tone: 'green' },
-        { label: 'Nonaktif', value: String(rows.filter((m: any) => !m.enabled).length), tone: 'red' },
+        { label: 'Nonaktif', value: String((rows || []).filter((m: any) => !m?.enabled).length), tone: 'red' },
       ]}
       toolbar={(
         <div className="txm-toolbar-row">
@@ -1688,9 +1688,9 @@ function ModulesPage({ apiFetch, onNotify }: { apiFetch: <T>(path: string, init?
             value={statusFilter}
             onChange={(id) => setStatusFilter(id as typeof statusFilter)}
             items={[
-              { id: 'all', label: 'Semua', count: rows.length },
+              { id: 'all', label: 'Semua', count: (rows || []).length },
               { id: 'on', label: 'Aktif', count: (rows || []).filter((m: any) => Boolean(m?.enabled)).length },
-              { id: 'off', label: 'Nonaktif', count: rows.filter((m: any) => !m.enabled).length },
+              { id: 'off', label: 'Nonaktif', count: (rows || []).filter((m: any) => !m?.enabled).length },
             ]}
           />
           <label className="txm-toolbar-field txm-toolbar-grow">
@@ -1718,24 +1718,24 @@ function ModulesPage({ apiFetch, onNotify }: { apiFetch: <T>(path: string, init?
             </thead>
             <tbody>
               {pager.slice.map((m) => (
-                <tr key={m.id}>
+                <tr key={m?.id}>
                   <td className="txm-doc">
-                    <b>{m.name}</b>
+                    <b>{m?.name}</b>
                   </td>
-                  <td>{m.layerLabel}</td>
-                  <td><small>{labelModulePages(m.pages)}</small></td>
+                  <td>{m?.layerLabel}</td>
+                  <td><small>{labelModulePages(m?.pages || [])}</small></td>
                   <td>
-                    <span className={`badge ${m.enabled ? 'badge-lunas' : 'badge-due'}`}>{m.statusLabel}</span>
+                    <span className={`badge ${m?.enabled ? 'badge-lunas' : 'badge-due'}`}>{m?.statusLabel}</span>
                   </td>
                   <td>
                     <div className="txm-actions">
                       <TxIconBtn
-                        icon={m.enabled ? 'trash' : 'pay'}
-                        label={m.enabled ? 'Nonaktifkan' : 'Aktifkan'}
-                        danger={m.enabled}
-                        pay={!m.enabled}
-                        disabled={busyId === m.id || (m.id === 'dashboard' && m.enabled)}
-                        onClick={() => void toggle(m.id, !m.enabled)}
+                        icon={m?.enabled ? 'trash' : 'pay'}
+                        label={m?.enabled ? 'Nonaktifkan' : 'Aktifkan'}
+                        danger={m?.enabled}
+                        pay={!m?.enabled}
+                        disabled={busyId === m?.id || (m?.id === 'dashboard' && m?.enabled)}
+                        onClick={() => void toggle(m?.id, !m?.enabled)}
                       />
                     </div>
                   </td>

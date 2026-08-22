@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { Prisma } from '@prisma/client';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TenantContext } from './tenant.context';
@@ -524,13 +525,13 @@ export class ExcelImportService {
     }
   }
 
-  private async ensurePartner(tenantId: string, name: string, type: 'SUPPLIER' | 'CUSTOMER') {
+  private async ensurePartner(tenantId: string, name: string, type: 'SUPPLIER' | 'CUSTOMER', tx: Prisma.TransactionClient) {
     let p = await this.prisma.partner.findFirst({ where: { tenantId, name, type } });
     if (!p) p = await this.prisma.partner.create({ data: { tenantId, name, type } });
     return p;
   }
 
-  private async nextNumber(tenantId: string, prefix: string) {
+  private async nextNumber(tenantId: string, prefix: string, tx: Prisma.TransactionClient) {
     const yymmdd = new Date().toISOString().slice(2, 10).replace(/-/g, '');
     const docType = prefix;
     const row = await this.prisma.docCounter.upsert({
@@ -585,7 +586,7 @@ export class ExcelImportService {
       || tagline !== undefined || invoiceUraian !== undefined;
     if (!hasAny) return;
 
-    const tenant = await this.prisma.workspace.findUniqueOrThrow({ where: { id: tenantId } });
+    const tenant = await tx.workspace.findUniqueOrThrow({ where: { id: tenantId } });
     let prev: Record<string, unknown> = {};
     try { prev = JSON.parse(tenant.settingsJson || '{}') as Record<string, unknown>; } catch { prev = {}; }
     const next = {
@@ -598,7 +599,7 @@ export class ExcelImportService {
       ...(tagline !== undefined ? { tagline } : {}),
       ...(invoiceUraian !== undefined ? { invoiceUraian } : {}),
     };
-    await this.prisma.workspace.update({
+    await tx.workspace.update({
       where: { id: tenantId },
       data: {
         settingsJson: JSON.stringify(next),
@@ -636,7 +637,7 @@ export class ExcelImportService {
         const accountRaw = getMappedValue(row, expenses.columns, 'account').toUpperCase();
         const description = getMappedValue(row, expenses.columns, 'description') || category;
         // Hindari duplikat antar re-impor (tanggal+nominal+deskripsi+PNL)
-        const exists = await this.prisma.cashEntry.findFirst({
+        const exists = await tx.cashEntry.findFirst({
           where: {
             tenantId,
             amount,
@@ -647,7 +648,7 @@ export class ExcelImportService {
           },
         });
         if (exists) { bump('expenses', skipped); continue; }
-        await this.prisma.cashEntry.create({
+        await tx.cashEntry.create({
           data: {
             tenantId,
             date,
@@ -669,13 +670,13 @@ export class ExcelImportService {
         if (amount <= 0) { bump('cash', skipped); continue; }
         const number = getMappedValue(row, cash.columns, 'number') || null;
         if (number) {
-          const exists = await this.prisma.cashEntry.findFirst({ where: { tenantId, number } });
+          const exists = await tx.cashEntry.findFirst({ where: { tenantId, number } });
           if (exists) { bump('cash', skipped); continue; }
         }
         const dirRaw = getMappedValue(row, cash.columns, 'direction').toUpperCase();
         const directionFinal = /KELUAR|OUT|DEBIT/.test(dirRaw) ? 'OUT' : 'IN';
         const accountRaw = getMappedValue(row, cash.columns, 'account').toUpperCase();
-        await this.prisma.cashEntry.create({
+        await tx.cashEntry.create({
           data: {
             tenantId,
             date: parseDateLoose(getMappedValue(row, cash.columns, 'date')) || new Date(),
@@ -702,7 +703,7 @@ export class ExcelImportService {
         if (amount <= 0) { bump('openBalances', skipped); continue; }
 
         if (/KAS|BANK|SALDO/.test(kindRaw) && !/HUTANG|PIUTANG/.test(kindRaw)) {
-          await this.prisma.cashEntry.create({
+          await tx.cashEntry.create({
             data: {
               tenantId, date, category: 'Modal', description: notes, amount,
               direction: 'IN', account: /BANK/.test(kindRaw) ? 'BANK' : 'CASH',
@@ -718,7 +719,7 @@ export class ExcelImportService {
         const product = await this.ensureProductBySize(tenantId, 'Saldo Awal', amount);
         const number = await this.nextNumber(tenantId, isPayable ? 'PUR' : 'SLS');
         try {
-          await this.prisma.transaction.create({
+          await tx.transaction.create({
             data: {
               tenantId,
               number,
@@ -852,7 +853,7 @@ export class ExcelImportService {
         }
         const status = normalizeStatus(statusRaw, type);
         if (srcNumber) {
-          const exists = await this.prisma.transaction.findFirst({
+          const exists = await tx.transaction.findFirst({
             where: { tenantId, number: srcNumber },
           });
           if (exists) {
@@ -926,7 +927,7 @@ export class ExcelImportService {
         else if (paidAmount > total) paidAmount = total;
 
         try {
-          await this.prisma.$transaction(async (tx) => {
+          await tx.$transaction(async (tx) => {
             // Mutasi stok hanya untuk pembelian; penjualan tidak dikaitkan ke stok (sementara).
             if (type === 'PURCHASE') {
               for (const item of itemCreates) {
@@ -986,7 +987,7 @@ export class ExcelImportService {
         continue;
       }
       if (srcNumber) {
-        const exists = await this.prisma.beritaAcara.findFirst({ where: { tenantId, number: srcNumber } });
+        const exists = await tx.beritaAcara.findFirst({ where: { tenantId, number: srcNumber } });
         if (exists) { bump('beritaAcara', skipped); continue; }
       }
       const number = srcNumber || await this.nextNumber(tenantId, 'BA');
@@ -1025,7 +1026,7 @@ export class ExcelImportService {
       }
 
       try {
-        await this.prisma.beritaAcara.create({
+        await tx.beritaAcara.create({
           data: {
             tenantId,
             number,
@@ -1052,17 +1053,17 @@ export class ExcelImportService {
     added: Record<string, number>,
     bump: (k: string, bag: Record<string, number>, n?: number) => void,
   ) {
-    const bas = await this.prisma.beritaAcara.findMany({
+    const bas = await tx.beritaAcara.findMany({
       where: { tenantId, purchaseId: null },
       orderBy: { date: 'asc' },
     });
     if (!bas.length) return;
-    const pos = await this.prisma.transaction.findMany({
+    const pos = await tx.transaction.findMany({
       where: { tenantId, type: 'PURCHASE' },
       orderBy: { date: 'asc' },
     });
     const used = new Set(
-      (await this.prisma.beritaAcara.findMany({
+      (await tx.beritaAcara.findMany({
         where: { tenantId, purchaseId: { not: null } },
         select: { purchaseId: true },
       })).map((b) => b.purchaseId!).filter(Boolean),
@@ -1087,7 +1088,7 @@ export class ExcelImportService {
           .sort((a, b) => a.d - b.d)[0]?.p;
       }
       if (!pick) continue;
-      await this.prisma.beritaAcara.update({
+      await tx.beritaAcara.update({
         where: { id: ba.id },
         data: { purchaseId: pick.id, status: 'IMPORTED' },
       });
@@ -1122,7 +1123,7 @@ export class ExcelImportService {
         continue;
       }
       if (srcNumber) {
-        const exists = await this.prisma.suratJalan.findFirst({ where: { tenantId, number: srcNumber } });
+        const exists = await tx.suratJalan.findFirst({ where: { tenantId, number: srcNumber } });
         if (exists) {
           bump('suratJalan', skipped);
           errors.push({ entity: 'suratJalan', row: idx + 2, message: `${srcNumber}: sudah ada — dilewati` });
@@ -1154,12 +1155,12 @@ export class ExcelImportService {
         }
       }
       if (!lines.length && saleRef) {
-        const sale = await this.prisma.transaction.findFirst({
+        const sale = await tx.transaction.findFirst({
           where: { tenantId, type: 'SALE', number: saleRef },
           include: { items: true },
         });
         if (sale?.items?.length) {
-          const products = await this.prisma.product.findMany({ where: { tenantId } });
+          const products = await tx.product.findMany({ where: { tenantId } });
           const pmap = new Map(products.map((p) => [p.id, p]));
           lines = sale.items.map((it) => {
             const p = pmap.get(it.productId);
@@ -1180,7 +1181,7 @@ export class ExcelImportService {
       }
 
       try {
-        await this.prisma.suratJalan.create({
+        await tx.suratJalan.create({
           data: {
             tenantId,
             number,

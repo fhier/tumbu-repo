@@ -89,74 +89,85 @@ export class BudidayaCycleService {
   }
 
   async create(input: Record<string, unknown> = {}) {
-    await this.planQuota.assertCanCreateCycle();
-    const pondId = str(input.pondId);
-    const speciesProfileId = str(input.speciesProfileId);
-    if (!pondId || !speciesProfileId) {
-      throw new BadRequestException('pondId dan speciesProfileId wajib.');
-    }
+    return await this.prisma.$transaction(async (tx) => {
+      await this.planQuota.assertCanCreateCycle();
+      const pondId = str(input.pondId);
+      const speciesProfileId = str(input.speciesProfileId);
+      if (!pondId || !speciesProfileId) {
+        throw new BadRequestException('pondId dan speciesProfileId wajib.');
+      }
 
-    const pond = await this.prisma.aquaPond.findFirst({
-      where: { id: pondId, tenantId: this.tid() },
-    });
-    if (!pond) throw new BadRequestException('Kolam tidak ditemukan di workspace ini.');
-    if (pond.status === 'RETIRED') {
-      throw new BadRequestException('Kolam sudah dinonaktifkan (RETIRED).');
-    }
+      const pond = await tx.aquaPond.findFirst({
+        where: { id: pondId, tenantId: this.tid() },
+      });
+      if (!pond) throw new BadRequestException('Kolam tidak ditemukan di workspace ini.');
+      if (pond.status === 'RETIRED') {
+        throw new BadRequestException('Kolam sudah dinonaktifkan (RETIRED).');
+      }
 
-    const species = await this.prisma.aquaSpeciesProfile.findFirst({
-      where: { id: speciesProfileId, tenantId: this.tid() },
-    });
-    if (!species) throw new BadRequestException('Jenis ikan tidak ditemukan di workspace ini.');
-    if (!species.isActive) {
-      throw new BadRequestException('Jenis ikan nonaktif.');
-    }
+      const species = await tx.aquaSpeciesProfile.findFirst({
+        where: { id: speciesProfileId, tenantId: this.tid() },
+      });
+      if (!species) throw new BadRequestException('Jenis ikan tidak ditemukan di workspace ini.');
+      if (!species.isActive) {
+        throw new BadRequestException('Jenis ikan nonaktif.');
+      }
 
-    await this.assertPondAvailable(pondId);
-
-    let code = str(input.code);
-    if (!code) {
-      code = await this.nextCode();
-    }
-
-    const data = {
-      tenantId: this.tid(),
-      pondId,
-      speciesProfileId,
-      code,
-      state: 'PLANNED' as CycleState,
-      seedSupplierPartnerId: optStr(input.seedSupplierPartnerId) ?? undefined,
-      initialCapital: optDec(input.initialCapital) ?? undefined,
-      notes: optStr(input.notes) ?? undefined,
-      targetSrPct: optDec(input.targetSrPct) ?? undefined,
-      targetFcr: optDec(input.targetFcr) ?? undefined,
-      targetWeightGram: optDec(input.targetWeightGram) ?? undefined,
-      targetDays: optInt(input.targetDays) ?? undefined,
-      targetBopAmount: optDec(input.targetBopAmount) ?? undefined,
-      targetHarvestKg: optDec(input.targetHarvestKg) ?? undefined,
-      targetRevenue: optDec(input.targetRevenue) ?? undefined,
-      categoryTargetsJson:
-        input.categoryTargetsJson !== undefined
-          ? typeof input.categoryTargetsJson === 'string'
-            ? String(input.categoryTargetsJson)
-            : JSON.stringify(input.categoryTargetsJson ?? {})
-          : '{}',
-    };
-
-    try {
-      return await this.prisma.aquaCultureCycle.create({
-        data,
-        include: {
-          pond: { select: { id: true, code: true, name: true } },
-          speciesProfile: { select: { id: true, code: true, name: true } },
+      const occupying = await tx.aquaCultureCycle.findFirst({
+        where: {
+          tenantId: this.tid(),
+          pondId,
+          state: { in: ['READY', 'ACTIVE', 'HARVESTING'] },
         },
       });
-    } catch (e: unknown) {
-      if ((e as { code?: string })?.code === 'P2002') {
-        throw new BadRequestException('Kode siklus sudah dipakai di workspace ini.');
+      if (occupying) {
+        throw new BadRequestException(`Kolam masih dipakai siklus ${occupying.code} (${occupying.state}).`);
       }
-      throw e;
-    }
+
+      let code = str(input.code);
+      if (!code) {
+        code = await this.nextCode();
+      }
+
+      const data = {
+        tenantId: this.tid(),
+        pondId,
+        speciesProfileId,
+        code,
+        state: 'PLANNED' as CycleState,
+        seedSupplierPartnerId: optStr(input.seedSupplierPartnerId) ?? undefined,
+        initialCapital: optDec(input.initialCapital) ?? undefined,
+        notes: optStr(input.notes) ?? undefined,
+        targetSrPct: optDec(input.targetSrPct) ?? undefined,
+        targetFcr: optDec(input.targetFcr) ?? undefined,
+        targetWeightGram: optDec(input.targetWeightGram) ?? undefined,
+        targetDays: optInt(input.targetDays) ?? undefined,
+        targetBopAmount: optDec(input.targetBopAmount) ?? undefined,
+        targetHarvestKg: optDec(input.targetHarvestKg) ?? undefined,
+        targetRevenue: optDec(input.targetRevenue) ?? undefined,
+        categoryTargetsJson:
+          input.categoryTargetsJson !== undefined
+            ? typeof input.categoryTargetsJson === 'string'
+              ? String(input.categoryTargetsJson)
+              : JSON.stringify(input.categoryTargetsJson ?? {})
+            : '{}',
+      };
+
+      try {
+        return await tx.aquaCultureCycle.create({
+          data,
+          include: {
+            pond: { select: { id: true, code: true, name: true } },
+            speciesProfile: { select: { id: true, code: true, name: true } },
+          },
+        });
+      } catch (e: unknown) {
+        if ((e as { code?: string })?.code === 'P2002') {
+          throw new BadRequestException('Kode siklus sudah dipakai di workspace ini.');
+        }
+        throw e;
+      }
+    });
   }
 
   async updatePlan(id: string, input: Record<string, unknown> = {}) {

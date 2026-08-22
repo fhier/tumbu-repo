@@ -2,6 +2,20 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
+function maskSensitive(obj: any): any {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(maskSensitive);
+  const copy = { ...obj };
+  for (const [k, v] of Object.entries(copy)) {
+    if (typeof v === 'string' && /token|secret|password|key|hmac|signature/i.test(k)) {
+      copy[k] = '***';
+    } else if (v && typeof v === 'object') {
+      copy[k] = maskSensitive(v);
+    }
+  }
+  return copy;
+}
+
 @Injectable()
 export class AuditService {
   constructor(private readonly prisma: PrismaService) {}
@@ -22,7 +36,7 @@ export class AuditService {
           tenantId: input.tenantId ?? null,
           entity: input.entity || null,
           entityId: input.entityId || null,
-          metaJson: JSON.stringify(input.meta || {}),
+          metaJson: JSON.stringify(maskSensitive(input.meta || {})),
         },
       });
     } catch {

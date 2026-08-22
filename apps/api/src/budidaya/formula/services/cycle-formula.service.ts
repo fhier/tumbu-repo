@@ -95,8 +95,11 @@ export class CycleFormulaService {
     const revenue = revenues.reduce((s, e) => s + dec(e.amount), 0);
 
     const hpp = computeHpp(bop.total, harvestKg);
+    if (hpp.hpp && (!Number.isFinite(hpp.hpp) || isNaN(hpp.hpp))) hpp.hpp = 0;
     const fcr = computeFcr(feedKg, harvestKg);
+    if (fcr.fcr && (!Number.isFinite(fcr.fcr) || isNaN(fcr.fcr))) fcr.fcr = 0;
     const sr = computeSr(stockedPcs, harvestedPcs);
+    if (sr.srPct && (!Number.isFinite(sr.srPct) || isNaN(sr.srPct))) sr.srPct = 0;
     const profit = computeProfit(revenue, bop.total);
 
     const targetBop = dec(cycle.targetBopAmount);
