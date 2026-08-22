@@ -317,30 +317,30 @@ function OverviewPage({ apiFetch, onNavigate, pendingWorkspaceCount = 0 }: {
       </p>
 
       {/* RAMPING METRIK METRICS PANEL */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-4">
-        <article className="clay rounded-[20px] p-5 space-y-1.5 bg-[var(--card)] border border-[var(--border)] shadow-sm hover:border-[#22C55E]/50 transition-all flex flex-col justify-between">
-          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Usaha aktif</span>
-          <strong className="text-3xl font-extrabold text-[#22C55E] tracking-tight">{activeCount}</strong>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <article className="clay rounded-2xl p-4 bg-[var(--card)] border border-[var(--border)] shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Aktif</span>
+          <strong className="text-2xl font-extrabold text-[#22C55E]">{activeCount}</strong>
         </article>
-        <article className="clay rounded-[20px] p-5 space-y-1.5 bg-[var(--card)] border border-[var(--border)] shadow-sm hover:border-[#0EA5E9]/50 transition-all flex flex-col justify-between">
-          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Trial aktif</span>
-          <strong className="text-3xl font-extrabold text-[#0EA5E9] tracking-tight">{trialCount}</strong>
+        <article className="clay rounded-2xl p-4 bg-[var(--card)] border border-[var(--border)] shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Trial</span>
+          <strong className="text-2xl font-extrabold text-[#0EA5E9]">{trialCount}</strong>
         </article>
-        <article className="clay rounded-[20px] p-5 space-y-1.5 bg-amber-500/5 border border-amber-500/20 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-black uppercase tracking-wider text-amber-500">Masa tenggang</span>
-          <strong className="text-3xl font-extrabold text-amber-500 tracking-tight">{graceCount}</strong>
+        <article className="clay rounded-2xl p-4 bg-amber-500/5 border border-amber-500/20 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-black uppercase tracking-wider text-amber-500">Tenggang</span>
+          <strong className="text-2xl font-extrabold text-amber-500">{graceCount}</strong>
         </article>
-        <article className="clay rounded-[20px] p-5 space-y-1.5 bg-[var(--card)] border border-[var(--border)] shadow-sm hover:border-indigo-500/50 transition-all flex flex-col justify-between">
-          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Anggota total</span>
-          <strong className="text-3xl font-extrabold text-indigo-500 dark:text-indigo-400 tracking-tight">{data.memberCount ?? 0}</strong>
+        <article className="clay rounded-2xl p-4 bg-[var(--card)] border border-[var(--border)] shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Member</span>
+          <strong className="text-2xl font-extrabold text-indigo-500">{data.memberCount ?? 0}</strong>
         </article>
-        <article className="clay rounded-[20px] p-5 space-y-1.5 bg-[var(--card)] border border-[var(--border)] shadow-sm hover:border-slate-500/50 transition-all flex flex-col justify-between">
-          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Total unit usaha</span>
-          <strong className="text-3xl font-extrabold text-[var(--text)] tracking-tight">{data.workspaceCount}</strong>
+        <article className="clay rounded-2xl p-4 bg-[var(--card)] border border-[var(--border)] shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-black uppercase tracking-wider text-[var(--text-muted)]">Unit Usaha</span>
+          <strong className="text-2xl font-extrabold text-[var(--text)]">{data.workspaceCount}</strong>
         </article>
-        <article className="clay rounded-[20px] p-5 space-y-1.5 bg-red-500/5 border border-red-500/20 shadow-sm flex flex-col justify-between">
-          <span className="text-[10px] font-black uppercase tracking-wider text-red-500">Antrian approval</span>
-          <strong className="text-3xl font-extrabold text-red-500 tracking-tight">{approvalTotal}</strong>
+        <article className="clay rounded-2xl p-4 bg-red-500/5 border border-red-500/20 shadow-sm flex flex-col justify-between">
+          <span className="text-[10px] font-black uppercase tracking-wider text-red-500">Antrian Approval</span>
+          <strong className="text-2xl font-extrabold text-red-500">{approvalTotal}</strong>
         </article>
       </div>
 
@@ -2222,66 +2222,56 @@ function SettingsPage({ onNavigate }: { onNavigate?: (page: string) => void }) {
       bare
       hideHead
     >
-      <div className="plat-settings-scope space-y-6">
-        <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-200 dark:border-sky-800 text-xs leading-relaxed text-sky-900 dark:text-sky-200">
-          <strong className="block text-sm font-extrabold mb-1">Fungsi System Master & Status Server:</strong>
-          Sistem Anda saat ini berjalan dalam mode <strong>Local Embedded Offline-First Engine</strong>. Ini berarti seluruh transaksi, surat jalan, berita acara, dan data member tersimpan aman secara mandiri tanpa harus tergantung pada Cloud Firestore. Pengaturan di bawah ini digunakan untuk mengontrol lisensi member, backup data master, serta pembersihan data sampel/demo.
+      <div className="plat-settings-scope grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Banner Info */}
+        <div className="md:col-span-2 p-6 rounded-3xl bg-slate-900 text-slate-100 border border-slate-700 shadow-xl">
+          <div className="flex gap-4 items-start">
+            <div className="text-sky-400 mt-1"><Settings size={28} /></div>
+            <div>
+              <h2 className="text-lg font-black tracking-tight text-white">Sistem Master</h2>
+              <p className="text-xs text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                Mode: <span className="font-bold text-sky-400">Local Embedded Offline-First Engine</span>. 
+                Seluruh data transaksi dan member tersimpan mandiri. Konfigurasi di bawah ini mengatur kebijakan lisensi, backup, dan manajemen integritas master system.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <ul className="plat-snap">
-          <li>
-            <div>
-              <strong>Paket, Kuota & Uji Coba Member</strong>
-              <p className="text-[11px] text-slate-500">Atur harga langganan, batas kolam/gudang, dan durasi trial gratis.</p>
+        {/* Setting Cards - Fungsionalitas Langsung */}
+        {[
+          { title: 'Paket & Kuota Member', desc: 'Kelola harga, limit kolam, & trial.', icon: CreditCard, action: 'Buka Paket', tab: 'plans' },
+          { title: 'Billing & Rekening', desc: 'Rekening penerima & cetak invoice.', icon: FileText, action: 'Buka Billing', tab: 'billing' },
+          { title: 'Blueprint & Modul', desc: 'Template usaha (Distributor/Budidaya).', icon: Layers, action: 'Buka Blueprint', tab: 'blueprints' },
+          { title: 'Anggota & Hak Akses', desc: 'Manajemen role & akses member.', icon: Users, action: 'Buka Anggota', tab: 'members' },
+          { title: 'Audit & Health Check', desc: 'Riwayat log & integritas database.', icon: ShieldCheck, action: 'Buka Audit', tab: 'audit' },
+        ].map((item) => (
+          <div key={item.tab} className="p-5 rounded-2xl bg-[var(--card)] border border-[var(--border)] shadow-sm flex flex-col justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-[var(--text)]"><item.icon size={20} /></div>
+              <div>
+                <strong className="block text-sm font-extrabold text-[var(--text)]">{item.title}</strong>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">{item.desc}</p>
+              </div>
             </div>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('plans')}>Buka Paket</button>
-          </li>
-          <li>
-            <div>
-              <strong>Profil Billing & Rekening Penerbit Master</strong>
-              <p className="text-[11px] text-slate-500">Atur No. Rekening BCA/Mandiri penerima transfer biaya lisensi member &amp; identitas PDF.</p>
-            </div>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('billing')}>Buka Profil Billing</button>
-          </li>
-          <li>
-            <div>
-              <strong>Blueprint & Modul Per Usaha Member</strong>
-              <p className="text-[11px] text-slate-500">Atur modul aktif per kategori usaha (Distributor vs Pembudidaya).</p>
-            </div>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('blueprints')}>Buka Blueprint</button>
-          </li>
-          <li>
-            <div>
-              <strong>Anggota & Akun Terdaftar Lintas Usaha</strong>
-              <p className="text-[11px] text-slate-500">Pantau seluruh member/user terdaftar, kelola hak akses role &amp; status aktif.</p>
-            </div>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('members')}>Buka Anggota</button>
-          </li>
-          <li>
-            <div>
-              <strong>Audit Aktivitas & Health Check Server</strong>
-              <p className="text-[11px] text-slate-500">Lihat riwayat log keamanan, status memori, dan integritas database.</p>
-            </div>
-            <button type="button" className="btn-secondary btn-sm" onClick={() => onNavigate?.('audit')}>Buka Audit</button>
-          </li>
-        </ul>
-
-        <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
-          <h4 className="text-sm font-extrabold text-slate-900 dark:text-slate-100">Pemeliharaan Data & Database Clean Slate</h4>
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              className="px-4 py-2.5 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition cursor-pointer"
-              onClick={handleExportBackup}
-            >
-              📥 Unduh Backup Database (.JSON)
+            <button type="button" className="w-full py-2.5 rounded-xl bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] text-xs font-bold hover:bg-[var(--border)] transition" onClick={() => onNavigate?.(item.tab)}>
+              {item.action}
             </button>
-            <button
-              type="button"
-              className="px-4 py-2.5 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 transition cursor-pointer"
-              onClick={handleResetDemoData}
-            >
-              🗑️ Hapus Data Demo / Bersihkan Database
+          </div>
+        ))}
+
+        {/* Maintenance Section */}
+        <div className="md:col-span-2 mt-4 pt-6 border-t border-[var(--border)]">
+          <h4 className="text-xs font-black text-[var(--text-muted)] uppercase tracking-wider mb-4 px-1">
+            Pemeliharaan Data & Database
+          </h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button type="button" className="p-4 rounded-xl bg-slate-900 text-white font-bold text-xs hover:bg-slate-800 transition flex items-center justify-between" onClick={handleExportBackup}>
+              <span>📥 Unduh Backup Database</span>
+              <span className="opacity-70">JSON Format</span>
+            </button>
+            <button type="button" className="p-4 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 transition flex items-center justify-between" onClick={handleResetDemoData}>
+              <span>🗑️ Hapus Data Demo</span>
+              <span className="opacity-70">Clean Slate</span>
             </button>
           </div>
         </div>

@@ -48,33 +48,30 @@ export function PlatformAdminSkin({
   return (
     <div className="space-y-6">
       {/* Header Banner Platform Admin */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white border border-slate-700/50 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="p-2.5 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/30 mt-0.5">
-              <IconComponent className="w-5 h-5" />
+      <div className="p-6 rounded-xl bg-white border border-slate-200 shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="p-3 rounded-lg bg-slate-100 text-slate-600">
+            <IconComponent className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-3 mb-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                {meta.category}
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-sky-500/20 text-sky-400 border border-sky-500/30">
-                  {meta.category}
-                </span>
-                <span className="text-[11px] text-slate-400 font-medium">Platform Founder Master</span>
-              </div>
-              <h1 className="text-base font-bold text-white tracking-tight">
-                {meta.title}
-              </h1>
-              <p className="text-xs text-slate-300 mt-0.5">
-                {meta.subtitle}
-              </p>
-            </div>
+            <h1 className="text-lg font-bold text-slate-900 tracking-tight">
+              {meta.title}
+            </h1>
+            <p className="text-sm text-slate-500 mt-1 max-w-xl">
+              {meta.subtitle}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Renders child page (PlatformPages router) */}
-      <div className="min-h-[480px]">
-        {children || <div className="p-8 text-center text-[var(--text-muted)]">Konten platform memuat…</div>}
+      <div className="min-h-[480px] pt-2">
+        {children || <div className="p-8 text-center text-slate-400">Konten memuat…</div>}
       </div>
     </div>
   );
