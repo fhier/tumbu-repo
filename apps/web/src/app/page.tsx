@@ -3625,26 +3625,26 @@ export default function Page() {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-[var(--border)]">
-                                {platformTeamMembers.map((tm) => (
+                                {platformTeamMembers && platformTeamMembers.map((tm) => (
                                   <tr key={tm.id} className="hover:bg-[var(--bg)] transition-colors">
-                                    <td className="py-3.5 font-bold text-[var(--text)]">{tm.name}</td>
-                                    <td className="py-3.5 text-[var(--text-muted)]">{tm.email}</td>
+                                    <td className="py-3.5 font-bold text-[var(--text)]">{tm?.name}</td>
+                                    <td className="py-3.5 text-[var(--text-muted)]">{tm?.email}</td>
                                     <td className="py-3.5">
                                       <span
                                         className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                                          tm.role === 'OWNER'
+                                          tm?.role === 'OWNER'
                                             ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
-                                            : tm.role === 'TEKNISI'
+                                            : tm?.role === 'TEKNISI'
                                             ? 'bg-[#0EA5E9]/10 text-[#0EA5E9] border border-[#0EA5E9]/20'
                                             : 'bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/20'
                                         }`}
                                       >
-                                        {tm.role}
+                                        {tm?.role}
                                       </span>
                                     </td>
                                     <td className="py-3.5">
                                       <div className="flex flex-wrap gap-1 max-w-xs">
-                                        {tm.permissions.map((p: string) => (
+                                        {tm?.permissions && tm.permissions.map((p: string) => (
                                           <span key={p} className="px-2 py-0.5 rounded text-[10px] bg-[var(--bg)] text-[var(--text-muted)] border border-[var(--border)]">
                                             {p}
                                           </span>
@@ -3652,7 +3652,7 @@ export default function Page() {
                                       </div>
                                     </td>
                                     <td className="py-3.5 text-right">
-                                      {tm.role !== 'OWNER' ? (
+                                      {tm?.role !== 'OWNER' ? (
                                         <button
                                           onClick={() => {
                                             setPlatformTeamMembers(prev => prev.filter(t => t.id !== tm.id));
