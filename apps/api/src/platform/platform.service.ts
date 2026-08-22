@@ -26,7 +26,7 @@ import {
   type WorkspaceStatus,
 } from './workspace-status';
 import { DEFAULT_PLANS, DEMO_PLAN_CODE, DEFAULT_PLAN_CODE, intersectModules, parsePlanModules } from './plans.util';
-import { resolvePlanLimits } from './plan-limits';
+import { resolvePlanLimits } from '@tumbu/core';
 import { hashPassword } from '../auth/crypto.util';
 import { ReminderService } from '../reminder/reminder.service';
 import { EmailService } from '../email/email.service';

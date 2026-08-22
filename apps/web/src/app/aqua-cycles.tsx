@@ -17,10 +17,17 @@ import { AquaSamplingS04 } from './aqua-sampling-s04';
 import { AquaHarvestS05 } from './aqua-harvest-s05';
 import { AquaCloseS06 } from './aqua-close-s06';
 import { AquaDashboardS01 } from './aqua-dashboard-s01';
+import dynamic from 'next/dynamic';
 import type { FormulaSnapshotFe } from './aqua-formula-display';
 import { computeActivePcs } from './aqua-mortality-s03.validate';
 
-import { AquaCycleCreateWizard } from './aqua-cycle-create-wizard';
+const AquaCycleCreateWizard = dynamic(
+  () => import('./aqua-cycle-create-wizard').then((mod) => mod.AquaCycleCreateWizard),
+  {
+    ssr: false,
+    loading: () => <div className="p-4 text-sm text-slate-500 animate-pulse">Memuat wizard siklus...</div>,
+  }
+);
 import { CycleStatusFilterPills } from './aqua-cycle-status-filter';
 import { cycleMatchesStatusFilter, type CycleStatusFilter } from './aqua-cycle-target-calc';
 import { CycleTargetPanel } from './aqua-cycle-target-panel';
@@ -31,7 +38,7 @@ import {
   PLAN_UPGRADE_MESSAGES,
   type PlanFeatureLimits,
   resolvePlanLimits,
-} from './plan-limits';
+} from '@tumbu/core';
 
 type PondOpt = { id: string; code: string; name: string; status: string; volumeM3?: number | string | null };
 type SpeciesOpt = {

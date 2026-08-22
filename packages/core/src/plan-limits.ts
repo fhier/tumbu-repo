@@ -19,6 +19,13 @@ export type PlanFeatureLimits = {
   maxWorkspaces: number;
 };
 
+export type WorkspacePlanContext = {
+  id: string | null;
+  code: string;
+  name: string;
+  limits: PlanFeatureLimits;
+};
+
 const STARTER_LIMITS: PlanFeatureLimits = {
   code: 'starter',
   tier: 'starter',
@@ -67,10 +74,21 @@ export function normalizePlanCode(code: string | null | undefined): string {
 }
 
 export function resolvePlanLimits(code: string | null | undefined): PlanFeatureLimits {
+  const rawCode = String(code || 'starter').toLowerCase().trim();
   const c = normalizePlanCode(code);
-  if (c === 'pro') return { ...PRO_LIMITS, code: c };
-  if (c === 'enterprise') return { ...ENTERPRISE_LIMITS, code: c };
+  if (c === 'pro') return { ...PRO_LIMITS, code: rawCode === 'growth' ? 'growth' : c };
+  if (c === 'enterprise') return { ...ENTERPRISE_LIMITS, code: rawCode === 'business' ? 'business' : c };
   return { ...STARTER_LIMITS, code: c === 'starter' ? 'starter' : c };
+}
+
+export function canCreatePond(limits: PlanFeatureLimits, activePondCount: number): boolean {
+  if (limits.maxPonds == null) return true;
+  return activePondCount < limits.maxPonds;
+}
+
+export function canCreateCycle(limits: PlanFeatureLimits, activeCycleCount: number): boolean {
+  if (limits.maxActiveCycles == null) return true;
+  return activeCycleCount < limits.maxActiveCycles;
 }
 
 export const PLAN_UPGRADE_MESSAGES = {

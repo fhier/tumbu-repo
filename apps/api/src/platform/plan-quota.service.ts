@@ -7,7 +7,7 @@ import {
   PLAN_UPGRADE_MESSAGES,
   resolvePlanLimits,
   type PlanFeatureLimits,
-} from './plan-limits';
+} from '@tumbu/core';
 
 @Injectable()
 export class PlanQuotaService {

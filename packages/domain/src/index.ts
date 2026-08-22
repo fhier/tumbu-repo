@@ -1,4 +1,5 @@
 export * from './types';
+export * from './commodity';
 export { computeSr } from './biology/sr';
 export { computeFcr } from './biology/fcr';
 export { computeActivePopulation, canRecordMortality, canRecordHarvestPcs } from './biology/population';

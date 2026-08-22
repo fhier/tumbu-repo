@@ -1,6 +1,9 @@
 // packages/core/src/index.ts
 // TUMBU Core Shared Types — digunakan oleh outbox & sync engine
 
+export { resolvePlanLimits, canCreatePond, canCreateCycle, PLAN_UPGRADE_MESSAGES } from './plan-limits';
+export * from './plan-limits';
+
 export interface OutboxItem {
   id: string;
   aggregate: string;

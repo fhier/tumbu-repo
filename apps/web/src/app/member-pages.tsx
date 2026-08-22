@@ -238,7 +238,7 @@ export function MemberSetup({
                     onClick={() => setBlueprintId(b.id)}
                   >
                     <div className="biz-picker-art">
-                      <img src={`/design/persona/${cardKind}.png`} alt="" loading="lazy" />
+                      <img src={`/design/persona/${cardKind}.webp`} alt="" loading="lazy" />
                     </div>
                     <div className="biz-picker-ico" aria-hidden="true"><Ti name={PAGE_ICONS[icon] ?? icon} size={18} /></div>
                     <h3>{b.name}</h3>

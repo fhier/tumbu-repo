@@ -18,9 +18,9 @@ import { AquaMasterShell } from './aqua-master-shell';
 import {
   canCreatePond,
   PLAN_UPGRADE_MESSAGES,
+  resolvePlanLimits,
   type PlanFeatureLimits,
-} from './plan-limits';
-import { resolvePlanLimits } from './plan-limits';
+} from '@tumbu/core';
 import {
   FEED_CATALOG_2026,
   calcBagsNeeded,

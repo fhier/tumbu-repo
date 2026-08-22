@@ -276,6 +276,7 @@ model FeedLog {
 
   cycle       AquaCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
 
+  @@index([cycleId, logDate])
   @@map("feed_logs")
 }
 
@@ -289,6 +290,7 @@ model MortalityLog {
 
   cycle       AquaCycle  @relation(fields: [cycleId], references: [id], onDelete: Cascade)
 
+  @@index([cycleId, logDate])
   @@map("mortality_logs")
 }
 
@@ -307,6 +309,7 @@ model SamplingLog {
 
   cycle          AquaCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
 
+  @@index([cycleId, samplingDate])
   @@map("sampling_logs")
 }
 
@@ -326,6 +329,7 @@ model HarvestLog {
 
   cycle          AquaCycle @relation(fields: [cycleId], references: [id], onDelete: Cascade)
 
+  @@index([cycleId, harvestDate])
   @@map("harvest_logs")
 }
 

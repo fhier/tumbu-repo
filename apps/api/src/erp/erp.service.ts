@@ -14,7 +14,7 @@ import {
   normalizeCommodityCategory,
   unitForCommodity,
   unitLabelForCommodity,
-} from './fishery-commodity';
+} from '@tumbu/domain';
 import { formatStockSkuName } from '../platform/filter-context';
 
 type ProductInput = {
@@ -231,7 +231,7 @@ export class ErpService {
     let prev: Record<string, unknown> = {};
     try { prev = JSON.parse(current.settingsJson || '{}') as Record<string, unknown>; } catch { prev = {}; }
     await this.prisma.workspace.update({
-      where: { id: current.id },
+      where: { id: this.tid() },
       data: { settingsJson: JSON.stringify({ ...prev, ...patch }) },
     });
   }
@@ -367,7 +367,7 @@ ${opts.note ? `<p class="muted" style="margin-top:12px;font-style:italic">Ketera
     const ids = rows
       .filter((e) => e.description === number || e.description.startsWith(`${number} ·`) || e.description.startsWith(`${number} `))
       .map((e) => e.id);
-    if (ids.length) await tx.cashEntry.deleteMany({ where: { id: { in: ids }, tenantId: this.tid() } });
+    if (ids.length) await this.prisma.cashEntry.deleteMany({ where: { id: { in: ids }, workspaceId: this.tid() } });
   }
 
   private async ensureProductBySizeLabel(

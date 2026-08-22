@@ -6,7 +6,7 @@ import {
   PROFIT_WARNING_TEXT,
   computeProfitAdvisor,
 } from './aqua-profit-advisor';
-import { PLAN_UPGRADE_MESSAGES } from './plan-limits';
+import { PLAN_UPGRADE_MESSAGES } from '@tumbu/core';
 import { money } from './aqua-shared';
 
 export function AquaProfitAdvisorCard({

@@ -11,7 +11,15 @@ import { AquaMasterPage, type AquaMasterTab } from './aqua-master';
 import { AquaCyclesPage } from './aqua-cycles';
 import { AquaCloseS06 } from './aqua-close-s06';
 import { AquaDashboardS01, type S01Action } from './aqua-dashboard-s01';
-import { AquaCycleAnalyticsChart } from './aqua-cycle-analytics-chart';
+import dynamic from 'next/dynamic';
+
+const AquaCycleAnalyticsChart = dynamic(
+  () => import('./aqua-cycle-analytics-chart').then((mod) => mod.AquaCycleAnalyticsChart),
+  {
+    ssr: false,
+    loading: () => <div className="h-64 w-full bg-slate-100 dark:bg-slate-800 rounded-xl animate-pulse" />,
+  }
+);
 import { AquaProfitAdvisorCard } from './aqua-profit-advisor-card';
 import { AquaSettingsS14 } from './aqua-settings-s14';
 import { AquaTroubleAssistant } from './aqua-trouble-assistant';
@@ -19,8 +27,8 @@ import { computeActivePcs } from './aqua-mortality-s03.validate';
 import { fmtFcr, fmtPct, type FormulaSnapshotFe } from './aqua-formula-display';
 import { formulaColorLabel } from './user-labels';
 import { money, canOperateEvents, type ApiFetch } from './aqua-shared';
-import type { WorkspacePlanContext } from './plan-limits';
-import { resolvePlanLimits } from './plan-limits';
+import type { WorkspacePlanContext, PlanFeatureLimits } from '@tumbu/core';
+import { resolvePlanLimits } from '@tumbu/core';
 
 type FormulaColor = 'GREEN' | 'YELLOW' | 'RED' | 'NEUTRAL';
 
@@ -382,7 +390,7 @@ function AquaDashboardView({
   workspaceLogoUrl?: string | null;
   blueprintName?: string;
   userName?: string;
-  planLimits: import('./plan-limits').PlanFeatureLimits;
+  planLimits: PlanFeatureLimits;
 }) {
   const operate = canOperateEvents(userRole);
   const [data, setData] = useState<AquaDashboard | null>(null);
@@ -848,7 +856,7 @@ function AquaAnalysisView({
 }: {
   apiFetch: ApiFetch;
   onNotify?: (m: string) => void;
-  planLimits: import('./plan-limits').PlanFeatureLimits;
+  planLimits: PlanFeatureLimits;
 }) {
   const [data, setData] = useState<AquaAnalysis | null>(null);
   const [loading, setLoading] = useState(true);

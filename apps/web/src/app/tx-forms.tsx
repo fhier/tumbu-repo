@@ -13,7 +13,7 @@ import {
   normalizeCommodityCategory,
   unitLabelForCommodity,
   type CommodityCategory,
-} from './fishery-commodity';
+} from '@tumbu/domain';
 import { filterSpeciesLabelOptions } from './filter-context';
 
 type Product = {

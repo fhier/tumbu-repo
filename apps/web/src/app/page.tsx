@@ -26,8 +26,8 @@ import { PembudidayaSkin } from './products/pembudidaya/PembudidayaSkin';
 import { printSuratJalanPdf, printBeritaAcaraPdf, printKwitansiPdf, printClosingReportPdf } from './print';
 
 // Local images
-const logoIconUrl = "/tumbu-icon-removebg-preview-1.png";
-const logoSymbolUrl = "/tumbu-icon-removebg-preview-1.png";
+const logoIconUrl = "/tumbu-icon-removebg-preview-1.webp";
+const logoSymbolUrl = "/tumbu-icon-removebg-preview-1.webp";
 
 // Helper functions for safe decimal parsing & formatting
 function parseDecimal(val: unknown): number {

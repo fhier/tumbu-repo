@@ -107,7 +107,7 @@ export function AuthBrandPanel({
 }) {
   return (
     <aside className="login-brand">
-      <div className="login-brand-hero-img" style={{ backgroundImage: "url('/design/hero-fishery-isometric.png')" }} aria-hidden="true" />
+      <div className="login-brand-hero-img" style={{ backgroundImage: "url('/design/hero-fishery-isometric.webp')" }} aria-hidden="true" />
       <svg className="login-brand-flow" viewBox="0 0 420 80" aria-hidden="true">
         <path d="M0 48 C80 8 140 72 220 32 S340 68 420 24" />
       </svg>

@@ -1,7 +1,15 @@
 'use client';
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react';
-import { ExcelImportWizard } from '../excel-import-wizard';
+import dynamic from 'next/dynamic';
+
+const ExcelImportWizard = dynamic(
+  () => import('../excel-import-wizard').then((mod) => mod.ExcelImportWizard),
+  {
+    ssr: false,
+    loading: () => <div className="p-4 text-sm text-slate-500 animate-pulse">Memuat wizard import...</div>,
+  }
+);
 import { progressPercent, resolveCurrentStep } from './engine';
 import type { OnboardingProgress, OnboardingStateResponse, OnboardingStepDef } from './types';
 import { computePondVolume, type PondShape } from '../aqua-pond-volume';
