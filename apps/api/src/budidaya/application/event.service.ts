@@ -200,9 +200,9 @@ export class BudidayaEventService {
       throw new BadRequestException('Tidak dapat void event pada siklus terminal.');
     }
     const updated = await (this.prisma[model] as {
-      update: (args: object) => Promise<unknown>;
-    }).update({
-      where: { id: eventId },
+      updateMany: (args: object) => Promise<{ count: number }>;
+    }).updateMany({
+      where: { id: event.id, tenantId: this.tid() },
       data: {
         recordStatus: 'VOIDED',
         voidedAt: new Date(),
@@ -210,7 +210,14 @@ export class BudidayaEventService {
         voidReason: optStr(reason) ?? 'void',
       },
     });
-    return { event: updated };
+    if (updated.count === 0) throw new NotFoundException(`${notFoundLabel} tidak ditemukan atau Anda tidak memiliki akses.`);
+    
+    // Fetch the updated record since updateMany doesn't return it
+    const eventResult = await (this.prisma[model] as {
+      findUnique: (args: object) => Promise<unknown>;
+    }).findUnique({ where: { id: event.id } });
+    
+    return { event: eventResult };
   }
 
   // —— Mortality ——
