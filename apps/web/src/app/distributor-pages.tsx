@@ -115,10 +115,10 @@ export function DistributorPages({
         {(distributorTab === 'pembelian' || distributorTab === 'purchase') && (
           <PembelianPanel apiFetch={apiFetch} onNotify={onNotify} products={products} suppliers={suppliers} purchases={purchases} beritaAcara={beritaAcara} sizes={sizes} onRefresh={fetchData} />
         )}
-        {(distributorTab === 'suratjalan' || distributorTab === 'surat_jalan') && (
+        {(distributorTab === 'suratjalan' || distributorTab === 'surat_jalan' || distributorTab === 'surat-jalan') && (
           <SuratJalanPanel apiFetch={apiFetch} onNotify={onNotify} sales={sales} sizes={sizes} suratJalan={suratJalan} onRefresh={fetchData} />
         )}
-        {(distributorTab === 'beritaacara' || distributorTab === 'berita_acara') && (
+        {(distributorTab === 'beritaacara' || distributorTab === 'berita_acara' || distributorTab === 'berita-acara') && (
           <BeritaAcaraPanel apiFetch={apiFetch} onNotify={onNotify} suppliers={suppliers} sizes={sizes} beritaAcara={beritaAcara} onRefresh={fetchData} />
         )}
         {(distributorTab === 'pengeluaran' || distributorTab === 'expense') && (

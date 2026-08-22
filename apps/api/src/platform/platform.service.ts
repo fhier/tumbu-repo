@@ -57,7 +57,36 @@ export class PlatformService {
   ) {}
 
   private async tenantRow() {
-    return this.prisma.workspace.findUniqueOrThrow({ where: { id: this.tenant.tryTenantId() } });
+    const tid = this.tenant.tryTenantId();
+    if (tid === 'PLATFORM_MASTER') {
+      return {
+        id: 'PLATFORM_MASTER',
+        slug: 'platform',
+        code: 'platform',
+        name: 'Platform Control Center',
+        blueprintId: '',
+        modulesJson: '[]',
+        settingsJson: '{}',
+        updatedAt: new Date(),
+        status: 'ACTIVE',
+        planId: null,
+      } as any;
+    }
+    if (tid === 'SETUP_PENDING') {
+      return {
+        id: 'SETUP_PENDING',
+        slug: 'setup',
+        code: 'setup',
+        name: 'Setup Pending',
+        blueprintId: '',
+        modulesJson: '[]',
+        settingsJson: '{}',
+        updatedAt: new Date(),
+        status: 'PENDING',
+        planId: null,
+      } as any;
+    }
+    return this.prisma.workspace.findUniqueOrThrow({ where: { id: tid } });
   }
 
   /**
@@ -229,10 +258,18 @@ export class PlatformService {
 
   async manifest() {
     const t = await this.tenantRow();
-    if (t.code === '_tumbu_accounts') {
+    if (t.id === 'PLATFORM_MASTER' || t.code === '_tumbu_accounts') {
       return {
-        schemaVersion: '1.0', workspaceId: t.id, workspaceMode: 'platform', workspaceName: 'TUMBU Platform',
+        schemaVersion: '1.0', workspaceId: 'PLATFORM_MASTER', workspaceMode: 'platform', workspaceName: 'TUMBU Platform',
         blueprintId: '', blueprintName: 'Control Plane', category: 'platform', templateId: '',
+        modules: [],
+        compatibility: { ok: true, errors: [], warnings: [] }, updatedAt: t.updatedAt.toISOString(),
+      };
+    }
+    if (t.id === 'SETUP_PENDING') {
+      return {
+        schemaVersion: '1.0', workspaceId: 'SETUP_PENDING', workspaceMode: 'setup', workspaceName: 'Setup Pending',
+        blueprintId: '', blueprintName: 'Setup', category: 'setup', templateId: '',
         modules: [],
         compatibility: { ok: true, errors: [], warnings: [] }, updatedAt: t.updatedAt.toISOString(),
       };
@@ -247,15 +284,51 @@ export class PlatformService {
   }
 
   async modules(workspaceId?: string) {
-    const defaultModules = [
-      { id: 'mod-feed', name: 'Pakan', description: 'Pencatatan pemberian pakan', category: 'operasional', status: 'stable', layerLabel: 'Operasional', statusLabel: 'Stabil', enabled: true, planAllowed: true },
-      { id: 'mod-water', name: 'Kualitas Air', description: 'Pemantauan parameter air', category: 'operasional', status: 'stable', layerLabel: 'Operasional', statusLabel: 'Stabil', enabled: true, planAllowed: true },
-      { id: 'mod-mortality', name: 'Mortalitas', description: 'Pencatatan kematian ikan', category: 'operasional', status: 'stable', layerLabel: 'Operasional', statusLabel: 'Stabil', enabled: true, planAllowed: true },
-      { id: 'mod-harvest', name: 'Panen', description: 'Pencatatan hasil panen', category: 'operasional', status: 'stable', layerLabel: 'Operasional', statusLabel: 'Stabil', enabled: true, planAllowed: true },
-      { id: 'mod-inventory', name: 'Inventori', description: 'Manajemen stok barang', category: 'supply-chain', status: 'stable', layerLabel: 'Supply Chain', statusLabel: 'Stabil', enabled: true, planAllowed: true },
-      { id: 'mod-do', name: 'DO / Surat Jalan', description: 'Pengiriman barang', category: 'supply-chain', status: 'stable', layerLabel: 'Supply Chain', statusLabel: 'Stabil', enabled: true, planAllowed: true }
-    ];
-    return defaultModules.map(m => ({ ...m, workspaceId: workspaceId || 'none', workspaceCode: 'demo', workspaceName: 'Demo Workspace' }));
+    if (!workspaceId) {
+      return MODULE_REGISTRY.map(m => ({
+        ...m,
+        description: m.name,
+        category: 'module',
+        layerLabel: m.layer === 'runtime' ? 'Sistem Inti' : 'Ekstensi',
+        statusLabel: m.status === 'stable' ? 'Stabil' : 'Beta',
+        enabled: false,
+        planAllowed: true,
+        workspaceId: 'none',
+        workspaceCode: '-',
+        workspaceName: 'Pilih Usaha Target',
+      }));
+    }
+    
+    const t = await this.prisma.workspace.findUnique({ where: { id: workspaceId } });
+    if (!t) throw new BadRequestException('Workspace tidak ditemukan.');
+    const activeMods = new Set(this.parseModules(t.modulesJson, t.blueprintId));
+    let planMods = new Set<string>();
+    let hasPlan = false;
+    
+    if (t.planId) {
+      const plan = await this.prisma.platformPlan.findUnique({ where: { id: t.planId } });
+      if (plan) {
+        hasPlan = true;
+        const arr = parsePlanModules(plan.modulesJson);
+        planMods = new Set(arr);
+      }
+    }
+    
+    return MODULE_REGISTRY.map((m) => {
+      const planAllowed = !hasPlan || planMods.has(m.id) || planMods.size === 0;
+      return {
+        ...m,
+        description: m.name,
+        category: 'module',
+        layerLabel: m.layer === 'runtime' ? 'Sistem Inti' : 'Ekstensi',
+        statusLabel: m.status === 'stable' ? 'Stabil' : 'Beta',
+        enabled: activeMods.has(m.id),
+        planAllowed,
+        workspaceId: t.id,
+        workspaceCode: t.slug,
+        workspaceName: t.name,
+      };
+    });
   }
 
   async setModule(input: { id?: string; enabled?: boolean; workspaceId?: string } = {}) {
@@ -786,12 +859,11 @@ export class PlatformService {
     if (!session.isPlatformAdmin) {
       throw new BadRequestException('Hanya Platform Admin yang dapat masuk Control Plane.');
     }
-    const accounts = await this.auth.ensureAccountsTenant();
-    await this.auth.switchTenant(token, accounts.id, 'PLATFORM_ADMIN');
+    await this.auth.switchTenant(token, 'PLATFORM_MASTER', 'PLATFORM_ADMIN');
     return {
-      tenantId: accounts.id,
-      code: accounts.code,
-      name: accounts.name,
+      tenantId: 'PLATFORM_MASTER',
+      code: 'platform',
+      name: 'Platform Control Center',
       land: 'platform' as const,
     };
   }

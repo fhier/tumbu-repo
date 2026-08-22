@@ -71,9 +71,10 @@ function payBadge(status: string) {
   return <span className="badge badge-issued">Belum bayar</span>;
 }
 
-function bizCardKind(id: string, kind: string): string {
-  if (id.includes('distributor') || kind === 'distributor') return 'distributor';
+function bizCardKind(id: string, kind?: string): string {
   if (kind === 'aquaculture') return 'pembudidaya';
+  if (kind === 'service') return 'service';
+  if (kind === 'distributor' || id.includes('distributor')) return 'distributor';
   return 'distributor';
 }
 

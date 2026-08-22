@@ -249,6 +249,7 @@ export class AuthService {
     }
 
     // Atomically create User and their initial Workspace
+    let newWorkspaceId = '';
     const user = await this.prisma.$transaction(async (tx) => {
       const u = await tx.user.create({
         data: {
@@ -277,7 +278,7 @@ export class AuthService {
           role: 'OWNER',
         },
       });
-
+      newWorkspaceId = w.id;
       return u;
     });
     const verification = await this.issueEmailVerification({ id: user.id, email: user.email, name: user.fullName });
@@ -286,7 +287,7 @@ export class AuthService {
       to: user.email,
       name: user.fullName,
     });
-    const session = await this.issueSession({ id: user.id, email: user.email, name: user.fullName, role: 'OWNER', isPlatformAdmin: false }, accounts.id, 'OWNER', 'setup');
+    const session = await this.issueSession({ id: user.id, email: user.email, name: user.fullName, role: 'OWNER', isPlatformAdmin: false }, newWorkspaceId, 'OWNER', 'workspace');
     return { ...session, verification };
   }
 
@@ -432,12 +433,10 @@ export class AuthService {
     if (isPlatformAdmin) {
       land = 'platform';
       membershipRole = 'PLATFORM_ADMIN';
-      const accounts = await this.ensureAccountsTenant();
-      tenantId = accounts.id;
+      tenantId = 'PLATFORM_MASTER';
     } else if (enterable.length === 0) {
       land = 'setup';
-      const accounts = await this.ensureAccountsTenant();
-      tenantId = accounts.id;
+      tenantId = 'SETUP_PENDING';
       membershipRole = 'OWNER';
     } else if (enterable.length > 1) {
       land = 'selector';
