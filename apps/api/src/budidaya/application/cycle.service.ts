@@ -226,9 +226,13 @@ export class BudidayaCycleService {
       }
     }
 
-    return this.prisma.aquaCultureCycle.update({
-      where: { id },
+    await this.prisma.aquaCultureCycle.updateMany({
+      where: { id, tenantId: this.tid() },
       data,
+    });
+    
+    return this.prisma.aquaCultureCycle.findUnique({
+      where: { id },
       include: {
         pond: { select: { id: true, code: true, name: true } },
         speciesProfile: { select: { id: true, code: true, name: true } },

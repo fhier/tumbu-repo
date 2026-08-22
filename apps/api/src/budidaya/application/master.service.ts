@@ -211,7 +211,8 @@ export class BudidayaMasterService {
     }
     if (input.notes !== undefined) data.notes = optStr(input.notes);
     try {
-      return await this.prisma.aquaPond.update({ where: { id }, data });
+      await this.prisma.aquaPond.updateMany({ where: { id, tenantId: this.tid() }, data });
+      return await this.prisma.aquaPond.findUnique({ where: { id } });
     } catch (e: unknown) {
       if ((e as { code?: string })?.code === 'P2002') {
         throw new BadRequestException('Kode kolam sudah dipakai di workspace ini.');
@@ -223,10 +224,11 @@ export class BudidayaMasterService {
   /** Soft deactivate — status RETIRED (bukan hapus baris; tidak memicu event). */
   async deactivatePond(id: string) {
     await this.requirePond(id);
-    return this.prisma.aquaPond.update({
-      where: { id },
+    await this.prisma.aquaPond.updateMany({
+      where: { id, tenantId: this.tid() },
       data: { status: 'RETIRED' },
     });
+    return this.prisma.aquaPond.findUnique({ where: { id } });
   }
 
   private async requirePond(id: string) {
@@ -298,7 +300,8 @@ export class BudidayaMasterService {
     if (input.isActive !== undefined) data.isActive = Boolean(input.isActive);
     if (input.notes !== undefined) data.notes = optStr(input.notes);
     try {
-      return await this.prisma.aquaSpeciesProfile.update({ where: { id }, data });
+      await this.prisma.aquaSpeciesProfile.updateMany({ where: { id, tenantId: this.tid() }, data });
+      return await this.prisma.aquaSpeciesProfile.findUnique({ where: { id } });
     } catch (e: unknown) {
       if ((e as { code?: string })?.code === 'P2002') {
         throw new BadRequestException('Kode jenis ikan sudah dipakai di workspace ini.');
@@ -309,10 +312,11 @@ export class BudidayaMasterService {
 
   async deactivateSpecies(id: string) {
     await this.requireSpecies(id);
-    return this.prisma.aquaSpeciesProfile.update({
-      where: { id },
+    await this.prisma.aquaSpeciesProfile.updateMany({
+      where: { id, tenantId: this.tid() },
       data: { isActive: false },
     });
+    return this.prisma.aquaSpeciesProfile.findUnique({ where: { id } });
   }
 
   /** Seed katalog spesies air tawar Indonesia — idempotent, tidak menimpa yang sudah ada. */
@@ -390,12 +394,14 @@ export class BudidayaMasterService {
     if (input.unit !== undefined) data.unit = str(input.unit, 'kg') || 'kg';
     if (input.defaultPrice !== undefined) data.defaultPrice = optDec(input.defaultPrice);
     if (input.isActive !== undefined) data.isActive = Boolean(input.isActive);
-    return this.prisma.aquaFeedType.update({ where: { id }, data });
+    await this.prisma.aquaFeedType.updateMany({ where: { id, tenantId: this.tid() }, data });
+    return this.prisma.aquaFeedType.findUnique({ where: { id } });
   }
 
   async deactivateFeedType(id: string) {
     await this.requireFeedType(id);
-    return this.prisma.aquaFeedType.update({ where: { id }, data: { isActive: false } });
+    await this.prisma.aquaFeedType.updateMany({ where: { id, tenantId: this.tid() }, data: { isActive: false } });
+    return this.prisma.aquaFeedType.findUnique({ where: { id } });
   }
 
   private async requireFeedType(id: string) {
